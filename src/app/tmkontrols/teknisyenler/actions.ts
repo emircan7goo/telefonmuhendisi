@@ -3,20 +3,12 @@
 import { db } from "@/lib/db";
 import { users, auditLogs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/authz";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 
-async function verifyAdmin() {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== "admin") {
-    throw new Error("Sadece Sistem Yöneticisi yetkisine sahiptir.");
-  }
-  return session.user;
-}
-
 export async function createTechnician(name: string, email: string, password: string) {
-  const admin = await verifyAdmin();
+  const admin = await requireAdmin();
 
   // Check if email exists
   const existing = await db.query.users.findFirst({ where: eq(users.email, email) });

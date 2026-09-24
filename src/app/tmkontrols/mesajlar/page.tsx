@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
 import { contactUserColumns, publicUserColumns } from "@/lib/db/safe-columns";
 import { repairs, repairMessages } from "@/lib/db/schema";
-import { eq, desc, asc, and } from "drizzle-orm";
+import { desc, asc } from "drizzle-orm";
 import { auth } from "@/auth";
+import { repairScopeFor } from "@/lib/authz";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import InboxChatWindow from "./InboxChatWindow";
@@ -35,11 +36,10 @@ export default async function UnifiedInboxPage({
   }
 
   const currentUserId = session.user.id || "";
-  const isTech = role === "technician";
 
-  // Fetch repairs list (tech only gets their own assigned repairs, admin gets all)
+  // Admin tümünü, teknisyen kendisine atanan ve atanmamış kayıtları görür
   const queryRepairs = await db.query.repairs.findMany({
-    where: isTech ? eq(repairs.technicianId, currentUserId) : undefined,
+    where: repairScopeFor({ id: currentUserId, role }),
     with: {
       user: { columns: contactUserColumns },
       messages: {

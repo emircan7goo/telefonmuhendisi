@@ -3,21 +3,16 @@
 import { db } from "@/lib/db";
 import { users, sessions, auditLogs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/authz";
 import { revalidatePath } from "next/cache";
 import { requestPasswordReset } from "@/app/(auth)/sifremi-unuttum/actions";
 
-async function verifyGodMode() {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== "admin") {
-    throw new Error("Sadece sistem yöneticileri (God Mode) bu işlemi yapabilir.");
-  }
-  return session.user;
-}
+// users.updatedAt güvenlik damgası olarak kullanılır: bu tarihten önce açılmış
+// oturumlar auth.ts içindeki jwt callback'inde geçersiz sayılır.
 
 export async function banUser(userId: string) {
-  const admin = await verifyGodMode();
-  await db.update(users).set({ role: "banned" }).where(eq(users.id, userId));
+  const admin = await requireAdmin();
+  await db.update(users).set({ role: "banned", updatedAt: new Date() }).where(eq(users.id, userId));
   await db.delete(sessions).where(eq(sessions.userId, userId));
   await db.insert(auditLogs).values({
     userId: admin.id,
@@ -30,7 +25,8 @@ export async function banUser(userId: string) {
 }
 
 export async function kickUser(userId: string) {
-  const admin = await verifyGodMode();
+  const admin = await requireAdmin();
+  await db.update(users).set({ updatedAt: new Date() }).where(eq(users.id, userId));
   await db.delete(sessions).where(eq(sessions.userId, userId));
   await db.insert(auditLogs).values({
     userId: admin.id,
@@ -43,8 +39,11 @@ export async function kickUser(userId: string) {
 }
 
 export async function changeRole(userId: string, newRole: "admin" | "technician" | "customer") {
-  const admin = await verifyGodMode();
-  await db.update(users).set({ role: newRole }).where(eq(users.id, userId));
+  const admin = await requireAdmin();
+  if (!["admin", "technician", "customer"].includes(newRole)) {
+    throw new Error("Geçersiz yetki tipi.");
+  }
+  await db.update(users).set({ role: newRole, updatedAt: new Date() }).where(eq(users.id, userId));
   await db.insert(auditLogs).values({
     userId: admin.id,
     action: "CHANGE_ROLE",
@@ -56,7 +55,7 @@ export async function changeRole(userId: string, newRole: "admin" | "technician"
 }
 
 export async function sendPasswordResetLink(userId: string) {
-  const admin = await verifyGodMode();
+  const admin = await requireAdmin();
   const target = await db.query.users.findFirst({
     where: eq(users.id, userId),
     columns: { id: true, email: true },
@@ -80,7 +79,7 @@ export async function sendPasswordResetLink(userId: string) {
 }
 
 export async function deleteUser(userId: string) {
-  const admin = await verifyGodMode();
+  const admin = await requireAdmin();
   // Önce oturumları sil
   await db.delete(sessions).where(eq(sessions.userId, userId));
   // Kullanıcıyı tamamen sil

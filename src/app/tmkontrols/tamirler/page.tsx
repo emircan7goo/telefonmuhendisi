@@ -4,11 +4,17 @@ import { eq, desc } from "drizzle-orm";
 import { Search, Wrench, CalendarClock, User } from "lucide-react";
 import Link from "next/link";
 import { RepairActionControls } from "./RepairActionControls";
+import { getSessionUser, repairScopeFor } from "@/lib/authz";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminRepairsPage() {
+  const viewer = await getSessionUser();
+  if (!viewer) redirect("/tmkontrols-giris");
+
   const allRepairs = await db.query.repairs.findMany({
+    where: repairScopeFor(viewer),
     orderBy: [desc(repairs.createdAt)],
     limit: 50,
     columns: {

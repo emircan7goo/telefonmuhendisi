@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { repairs, repairMessages, auditLogs } from "@/lib/db/schema";
-import { auth } from "@/auth";
+import { claimFor, requireRepairAccess } from "@/lib/authz";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "@/lib/mail/smtp";
@@ -10,13 +10,7 @@ import { getRepairStatusUpdatedEmailHtml } from "@/lib/mail/templates";
 import { contactUserColumns } from "@/lib/db/safe-columns";
 
 export async function sendRepairMessage(repairId: number, message: string, imageUrl: string | null = null) {
-  const session = await auth();
-  if (!session?.user) throw new Error("Oturum bulunamadı.");
-
-  const role = (session.user as any).role;
-  if (role !== "admin" && role !== "technician") {
-    throw new Error("Bu işlemi yapmak için yetkiniz yok.");
-  }
+  const { user } = await requireRepairAccess(repairId, { staffOnly: true });
 
   if (!message && !imageUrl) {
     throw new Error("Mesaj veya görsel boş olamaz.");
@@ -24,7 +18,7 @@ export async function sendRepairMessage(repairId: number, message: string, image
 
   await db.insert(repairMessages).values({
     repairId,
-    userId: session.user.id as string,
+    userId: user.id,
     message: message || null,
     imageUrl: imageUrl || null,
   });
@@ -41,13 +35,7 @@ export async function updateRepairDetails(repairId: number, data: {
   laborCost: string;
   repairImage: string | null;
 }) {
-  const session = await auth();
-  if (!session?.user) throw new Error("Oturum bulunamadı.");
-
-  const role = (session.user as any).role;
-  if (role !== "admin" && role !== "technician") {
-    throw new Error("Bu işlemi yapmak için yetkiniz yok.");
-  }
+  const { user } = await requireRepairAccess(repairId, { staffOnly: true });
 
   const { status, notes, finalPrice, partsCost, repairImage } = data;
 
@@ -72,13 +60,14 @@ export async function updateRepairDetails(repairId: number, data: {
       partsCost: partsCost ? partsCost : null,
       laborCost: calculatedLabor,
       repairImage: repairImage || null,
+      ...claimFor(user, repair),
       updatedAt: new Date()
     })
     .where(eq(repairs.id, repairId));
 
   // Log to audit logs
   await db.insert(auditLogs).values({
-    userId: session.user.id as string,
+    userId: user.id,
     action: "UPDATE_REPAIR_DETAILS",
     target: repairId.toString(),
     details: `Tamir #${repairId} detayları güncellendi. Durum: ${status}, Fiyat: ${finalPrice || 0}₺`

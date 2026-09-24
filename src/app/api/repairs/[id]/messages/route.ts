@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { repairMessages, repairs } from "@/lib/db/schema";
-import { auth } from "@/auth";
 import { eq } from "drizzle-orm";
 import { pusherServer } from "@/lib/pusher";
+import { repairChannel } from "@/lib/pusher-channels";
+import { canAccessRepair, getSessionUser } from "@/lib/authz";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
+    const viewer = await getSessionUser();
+    if (!viewer) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -25,17 +26,8 @@ export async function GET(
 
     if (!repair) return new NextResponse("Not Found", { status: 404 });
 
-    // Yetki: admin hepsini görebilir, müşteri sadece kendi talebi, teknisyen sadece atandığı talep
-    const role = (session.user as any).role;
-    const isAdmin = role === "admin";
-    const isTechnician = role === "technician";
-
-    if (!isAdmin && repair.userId !== (session.user as any).id) {
-      if (isTechnician && repair.technicianId === (session.user as any).id) {
-        // izin ver
-      } else {
-        return new NextResponse("Unauthorized", { status: 401 });
-      }
+    if (!canAccessRepair(viewer, repair)) {
+      return new NextResponse("Forbidden", { status: 403 });
     }
 
     const messages = await db.query.repairMessages.findMany({
@@ -55,8 +47,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
+    const viewer = await getSessionUser();
+    if (!viewer) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -77,18 +69,11 @@ export async function POST(
 
     if (!repair) return new NextResponse("Not Found", { status: 404 });
 
-    const role = (session.user as any).role;
-    const isAdmin = role === "admin";
-    const isTechnician = role === "technician";
-    const userId = (session.user as any).id || "system";
-
-    if (!isAdmin && repair.userId !== userId) {
-      if (isTechnician && repair.technicianId === userId) {
-        // izin ver
-      } else {
-        return new NextResponse("Unauthorized", { status: 401 });
-      }
+    if (!canAccessRepair(viewer, repair)) {
+      return new NextResponse("Forbidden", { status: 403 });
     }
+    const isAdmin = viewer.role === "admin";
+    const userId = viewer.id;
 
     if (isSystemMessage && !isAdmin) {
        return new NextResponse("Sadece admin sistem mesajı atabilir.", { status: 403 });
@@ -104,7 +89,7 @@ export async function POST(
 
     // Trigger pusher event
     try {
-      await pusherServer.trigger(`repair-${repairId}`, "new-message", newMessage[0]);
+      await pusherServer.trigger(repairChannel(repairId), "new-message", newMessage[0]);
     } catch (e) {
       console.error("Pusher error:", e);
     }

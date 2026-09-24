@@ -4,18 +4,10 @@ import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
-
-// Güvenlik: Sadece yetkili personelin erişimini sağlar
-const checkAdmin = async () => {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== "admin") {
-    throw new Error("Yetkisiz erişim: Bu işlem için Admin yetkisi gereklidir.");
-  }
-};
+import { requireAdmin } from "@/lib/authz";
 
 export async function toggleProductStatus(productId: number, isActive: boolean) {
-  await checkAdmin();
+  await requireAdmin();
   try {
     await db.update(products)
       .set({ isActive, updatedAt: new Date() })
@@ -28,7 +20,7 @@ export async function toggleProductStatus(productId: number, isActive: boolean) 
 }
 
 export async function updateProductStock(productId: number, newStock: number) {
-  await checkAdmin();
+  await requireAdmin();
   try {
     await db.update(products)
       .set({ stock: newStock, updatedAt: new Date() })
@@ -41,7 +33,7 @@ export async function updateProductStock(productId: number, newStock: number) {
 }
 
 export async function deleteProduct(productId: number) {
-  await checkAdmin();
+  await requireAdmin();
   try {
     await db.delete(products).where(eq(products.id, productId));
     revalidatePath("/tmkontrols/urunler");
@@ -62,7 +54,7 @@ export async function createRealProduct(data: {
   condition: string;
   image: string;
 }) {
-  await checkAdmin();
+  await requireAdmin();
   try {
     const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Math.floor(Math.random() * 1000);
     

@@ -4,18 +4,10 @@ import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
-
-// Güvenlik: Sadece yetkili personelin erişimini sağlar
-const checkAdmin = async () => {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== "admin") {
-    throw new Error("Yetkisiz erişim: Bu işlem için Admin yetkisi gereklidir.");
-  }
-};
+import { requireAdmin } from "@/lib/authz";
 
 export async function updateOrderStatus(orderId: number, status: string) {
-  await checkAdmin();
+  await requireAdmin();
   try {
     await db.update(orders)
       .set({ status, updatedAt: new Date() })

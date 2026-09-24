@@ -5,12 +5,12 @@ import { devicePurchases, notifications, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { sendEmail } from "@/lib/mail/smtp";
-import { auth } from "@/auth";
+import { getSessionUser } from "@/lib/authz";
 import { contactUserColumns } from "@/lib/db/safe-columns";
 
 export async function makeOffer(data: { id: number; price: number; notes: string }) {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== "admin") {
+  const admin = await getSessionUser();
+  if (!admin || admin.role !== "admin") {
     return { success: false, error: "Yetkisiz erişim: Bu işlem için Admin yetkisi gereklidir." };
   }
 

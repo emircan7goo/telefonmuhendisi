@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { repairMessages, repairs } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { pusherServer } from "@/lib/pusher";
+import { repairChannel } from "@/lib/pusher-channels";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
 
     // Trigger pusher event
     try {
-      await pusherServer.trigger(`repair-${repairId}`, "new-message", newMsg);
+      await pusherServer.trigger(repairChannel(repairId), "new-message", newMsg);
     } catch (e) {
       console.error("Pusher error:", e);
     }

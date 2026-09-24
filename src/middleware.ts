@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+const ADMIN_ONLY_PREFIXES = [
+  "/tmkontrols/siparisler",
+  "/tmkontrols/urunler",
+  "/tmkontrols/cihaz-alim",
+  "/tmkontrols/users",
+  "/tmkontrols/ayarlar",
+  "/tmkontrols/teknisyenler",
+];
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -22,6 +31,18 @@ export async function middleware(req: NextRequest) {
       const url = req.nextUrl.clone();
       url.pathname = "/tmkontrols-giris";
       url.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(url);
+    }
+
+    // İlk savunma hattı: admin'e özel bölümler. (Asıl kontrol sayfa layout'larında
+    // ve server action'larda, veritabanından yenilenen rol ile yapılır.)
+    const isAdminOnly = ADMIN_ONLY_PREFIXES.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+    );
+    if (isAdminOnly && role !== "admin") {
+      const url = req.nextUrl.clone();
+      url.pathname = "/tmkontrols";
+      url.search = "";
       return NextResponse.redirect(url);
     }
   }

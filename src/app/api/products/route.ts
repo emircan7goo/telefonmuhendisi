@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 import { and, desc, eq, sql } from "drizzle-orm";
+import { getSessionUser } from "@/lib/authz";
 
 export const revalidate = 300;
 
@@ -12,8 +13,17 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(Number(searchParams.get("limit") ?? (paginated ? 24 : 500)), 500);
     const offset = Math.max(Number(searchParams.get("offset") ?? 0), 0);
     const categoryId = searchParams.get("categoryId");
-    const includeInactive = searchParams.get("includeInactive") === "1";
-    const full = searchParams.get("full") === "1";
+    let includeInactive = searchParams.get("includeInactive") === "1";
+    let full = searchParams.get("full") === "1";
+
+    // Pasif ürünler ve tam kolon listesi sadece admin'e açık
+    if (includeInactive || full) {
+      const viewer = await getSessionUser();
+      if (viewer?.role !== "admin") {
+        includeInactive = false;
+        full = false;
+      }
+    }
 
     const filters = [] as any[];
     if (!includeInactive) filters.push(eq(products.isActive, true));

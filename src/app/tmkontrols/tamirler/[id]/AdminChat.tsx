@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Send, Image as ImageIcon, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { pusherClient } from "@/lib/pusher-client";
+import { repairChannel } from "@/lib/pusher-channels";
 import { ImageViewer } from "@/components/ui/ImageViewer";
 
 export function AdminChat({ repairId, initialMessages, customer }: { repairId: number, initialMessages: any[], customer: any }) {
@@ -14,7 +15,7 @@ export function AdminChat({ repairId, initialMessages, customer }: { repairId: n
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const channel = pusherClient.subscribe(`repair-${repairId}`);
+    const channel = pusherClient.subscribe(repairChannel(repairId));
     channel.bind("new-message", (newMsg: any) => {
       setMessages((prev) => {
         if (prev.find((m) => m.id === newMsg.id)) return prev;
@@ -23,7 +24,7 @@ export function AdminChat({ repairId, initialMessages, customer }: { repairId: n
     });
 
     return () => {
-      pusherClient.unsubscribe(`repair-${repairId}`);
+      pusherClient.unsubscribe(repairChannel(repairId));
     };
   }, [repairId]);
 

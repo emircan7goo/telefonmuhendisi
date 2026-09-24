@@ -11,77 +11,22 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [callbackUrl, setCallbackUrl] = useState("");
   
-  // Login Steps: 1: Credentials, 2: 2FA OTP
-  const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const cb = params.get("callbackUrl");
-    if (cb) setCallbackUrl(cb);
+    // Açık yönlendirmeyi engelle: sadece site içi göreli yollar
+    if (cb && cb.startsWith("/") && !cb.startsWith("//")) setCallbackUrl(cb);
   }, []);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    
-    try {
-      // 1. Check if 2FA is needed
-      const checkRes = await fetch("/api/auth/check-2fa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      const checkData = await checkRes.json();
-
-      if (!checkRes.ok) {
-        throw new Error(checkData.error || "Giriş başarısız.");
-      }
-
-      if (checkData.require2FA) {
-        // Show OTP step
-        toast.success(checkData.message || "2FA kodu gönderildi.");
-        setStep(2);
-        setIsLoading(false);
-      } else {
-        // Trusted device or no 2FA needed, sign in directly
-        await performSignIn();
-      }
-    } catch (err: any) {
-      setError(err.message || "Hata oluştu.");
-      setIsLoading(false);
-    }
-  };
-
-  const handleOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    try {
-      // Verify OTP and set trusted cookie
-      const verifyRes = await fetch("/api/auth/verify-2fa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp, rememberMe })
-      });
-      const verifyData = await verifyRes.json();
-
-      if (!verifyRes.ok) {
-        throw new Error(verifyData.error || "Doğrulama başarısız.");
-      }
-
-      // If OTP is valid, proceed to sign in
-      await performSignIn();
-    } catch (err: any) {
-      setError(err.message || "Doğrulama hatası.");
-      setIsLoading(false);
-    }
+    await performSignIn();
   };
 
   const performSignIn = async () => {
@@ -159,15 +104,14 @@ export default function LoginPage() {
             >
                 <div className="mb-8 flex justify-between items-center">
                   <div>
-                    <h2 className="text-3xl font-bold text-slate-900 mb-2">{step === 1 ? "Giriş Yap" : "2FA Doğrulama"}</h2>
+                    <h2 className="text-3xl font-bold text-slate-900 mb-2">Giriş Yap</h2>
                     <p className="text-sm text-slate-600">
-                      {step === 1 ? "Hesabınıza erişmek için bilgilerinizi girin." : "E-posta adresinize gönderilen 6 haneli kodu girin."}
+                      Hesabınıza erişmek için bilgilerinizi girin.
                     </p>
                   </div>
                 </div>
 
-                {step === 1 ? (
-                  <form onSubmit={handleLoginSubmit} className="flex flex-col gap-5">
+                <form onSubmit={handleLoginSubmit} className="flex flex-col gap-5">
                     <div className="relative group">
                       <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">E-posta Adresi</label>
                       <div className="relative">
@@ -194,16 +138,6 @@ export default function LoginPage() {
                       </div>
                     </div>
 
-                    <label className="flex items-center gap-2 cursor-pointer mt-1">
-                      <input 
-                        type="checkbox" 
-                        checked={rememberMe} 
-                        onChange={(e) => setRememberMe(e.target.checked)} 
-                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                      />
-                      <span className="text-sm font-medium text-slate-600">Bu cihazı hatırla ve güven</span>
-                    </label>
-
                     {error && <div className="text-red-500 text-sm font-medium">{error}</div>}
                     
                     <motion.button
@@ -214,31 +148,6 @@ export default function LoginPage() {
                       {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Sisteme Giriş Yap <ArrowRight className="w-5 h-5" /></>}
                     </motion.button>
                   </form>
-                ) : (
-                  <form onSubmit={handleOtpSubmit} className="flex flex-col gap-5">
-                    <div className="relative group">
-                      <div className="flex justify-between mb-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Doğrulama Kodu</label>
-                        <button type="button" onClick={() => setStep(1)} className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors">Geri Dön</button>
-                      </div>
-                      <input 
-                        type="text" required value={otp} onChange={(e) => setOtp(e.target.value)}
-                        placeholder="6 Haneli Kod" maxLength={6}
-                        className="w-full text-center tracking-widest font-mono text-2xl bg-gray-50 border border-gray-200 rounded-xl py-4 px-4 text-gray-900 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all"
-                      />
-                    </div>
-                    
-                    {error && <div className="text-red-500 text-sm font-medium">{error}</div>}
-                    
-                    <motion.button
-                      type="submit" disabled={isLoading}
-                      whileTap={{ scale: 0.98 }}
-                      className="mt-4 w-full py-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg transition-all flex items-center justify-center gap-2"
-                    >
-                      {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Kodu Doğrula <ArrowRight className="w-5 h-5" /></>}
-                    </motion.button>
-                  </form>
-                )}
 
                 <div className="mt-8 text-center text-sm text-slate-500 font-medium relative z-20">
                   Hesabınız yok mu? <a href={callbackUrl ? `/kayit?callbackUrl=${callbackUrl}` : "/kayit"} className="text-slate-900 font-bold hover:text-blue-600 transition-colors">Hemen Oluşturun</a>

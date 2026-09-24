@@ -7,6 +7,9 @@ import { accounts, sessions, users, verificationTokens } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
+// Rol ve ban durumunun JWT'de veritabanından yenilenme aralığı
+const ROLE_REFRESH_MS = 60 * 1000;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db, {
     usersTable: users as any,
@@ -114,6 +117,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = (user as any).role || "customer";
+        token.authTime = Date.now();
+        token.checkedAt = Date.now();
+        return token;
+      }
+      if (!token.id) return token;
+
+      // Rol/ban durumunu periyodik olarak veritabanından yenile.
+      const checkedAt = typeof token.checkedAt === "number" ? token.checkedAt : 0;
+      if (Date.now() - checkedAt < ROLE_REFRESH_MS) return token;
+
+      // Bu alan eklenmeden önce açılmış oturumlar için başlangıç damgası
+      if (typeof token.authTime !== "number") token.authTime = Date.now();
+
+      try {
+        const dbUser = await db.query.users.findFirst({
+          where: eq(users.id, token.id as string),
+          columns: { role: true, updatedAt: true },
+        });
+
+        // Silinmiş/banlanmış kullanıcı veya oturum açıldıktan sonra yapılan
+        // güvenlik değişikliği (ban, kick, rol, şifre) => oturumu geçersiz kıl.
+        if (!dbUser || dbUser.role === "banned") return null;
+        if (dbUser.updatedAt.getTime() > (token.authTime as number)) return null;
+
+        token.role = dbUser.role;
+        token.checkedAt = Date.now();
+      } catch (err) {
+        // DB geçici olarak erişilemezse mevcut oturumu bozma; sonraki istekte tekrar denenir.
+        console.warn("[auth] role refresh failed:", (err as Error).message);
       }
       return token;
     },

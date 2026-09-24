@@ -1,37 +1,22 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { repairs, auditLogs } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { auth } from "@/auth";
+import { repairs, users, auditLogs } from "@/lib/db/schema";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-
-async function verifyAuth() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Oturum bulunamadı.");
-
-  const role = (session.user as any).role;
-  if (role !== "admin" && role !== "technician") {
-    throw new Error("Bu işlemi yapmak için yetkiniz yok.");
-  }
-  return session.user;
-}
+import { claimFor, requireAdmin, requireRepairAccess } from "@/lib/authz";
 
 export async function updateRepairStatus(repairId: number, status: string) {
-  const user = await verifyAuth();
-  
-  const repair = await db.query.repairs.findFirst({
-    where: eq(repairs.id, repairId)
-  });
-
-  if (!repair) throw new Error("Kayıt bulunamadı.");
+  const { user, repair } = await requireRepairAccess(repairId, { staffOnly: true });
 
   let finalPrice = repair.finalPrice;
   if ((status === "in_progress" || status === "completed") && !finalPrice && repair.estimatedPrice) {
     finalPrice = repair.estimatedPrice;
   }
 
-  await db.update(repairs).set({ status, finalPrice, updatedAt: new Date() }).where(eq(repairs.id, repairId));
+  await db.update(repairs)
+    .set({ status, finalPrice, ...claimFor(user, repair), updatedAt: new Date() })
+    .where(eq(repairs.id, repairId));
   
   await db.insert(auditLogs).values({
     userId: user.id as string,
@@ -46,8 +31,14 @@ export async function updateRepairStatus(repairId: number, status: string) {
 }
 
 export async function assignTechnician(repairId: number, technicianId: string) {
-  const user = await verifyAuth();
-  
+  const user = await requireAdmin();
+
+  const technician = await db.query.users.findFirst({
+    where: and(eq(users.id, technicianId), eq(users.role, "technician")),
+    columns: { id: true },
+  });
+  if (!technician) throw new Error("Geçerli bir teknisyen seçilmedi.");
+
   await db.update(repairs).set({ technicianId, updatedAt: new Date() }).where(eq(repairs.id, repairId));
   
   await db.insert(auditLogs).values({
@@ -62,13 +53,7 @@ export async function assignTechnician(repairId: number, technicianId: string) {
 }
 
 export async function offerPrice(repairId: number, price: string) {
-  const user = await verifyAuth();
-  
-  const repair = await db.query.repairs.findFirst({
-    where: eq(repairs.id, repairId)
-  });
-
-  if (!repair) throw new Error("Kayıt bulunamadı.");
+  const { user, repair } = await requireRepairAccess(repairId, { staffOnly: true });
 
   const notes = `${repair.notes || ""}\n[YÖNETİM]: Müşteriye yeni fiyat teklifi sunuldu: ${price} ₺`.trim();
 
@@ -77,6 +62,7 @@ export async function offerPrice(repairId: number, price: string) {
       estimatedPrice: price, 
       status: "awaiting_customer_approval", 
       notes,
+      ...claimFor(user, repair),
       updatedAt: new Date() 
     })
     .where(eq(repairs.id, repairId));

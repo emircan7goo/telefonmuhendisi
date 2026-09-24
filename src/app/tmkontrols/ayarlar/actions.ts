@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { settings, auditLogs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/auth";
+import { getSessionUser } from "@/lib/authz";
 import { revalidatePath } from "next/cache";
 
 export async function saveSettings(formData: {
@@ -12,8 +12,8 @@ export async function saveSettings(formData: {
   maintenanceMode: string;
 }) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "admin") {
+    const admin = await getSessionUser();
+    if (!admin || admin.role !== "admin") {
       return { success: false, error: "Yetkisiz erişim." };
     }
 
@@ -44,7 +44,7 @@ export async function saveSettings(formData: {
 
     // Log the audit
     await db.insert(auditLogs).values({
-      userId: session.user?.id || null,
+      userId: admin.id,
       action: "UPDATE_SETTINGS",
       target: "settings_table",
       details: "Sistem ayarları güncellendi.",

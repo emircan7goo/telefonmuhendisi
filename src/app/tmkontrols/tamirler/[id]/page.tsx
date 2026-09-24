@@ -8,6 +8,8 @@ import TechnicianPanel from "./TechnicianPanel";
 import { notFound } from "next/navigation";
 import { ImageViewer } from "@/components/ui/ImageViewer";
 import { contactUserColumns, publicUserColumns } from "@/lib/db/safe-columns";
+import { canAccessRepair, getSessionUser } from "@/lib/authz";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,9 @@ export default async function RepairDetailPage({ params }: { params: Promise<{ i
   const resolvedParams = await params;
   const repairId = parseInt(resolvedParams.id);
   if (isNaN(repairId)) return notFound();
+
+  const viewer = await getSessionUser();
+  if (!viewer) redirect("/tmkontrols-giris");
 
   const repairResult = await db.query.repairs.findFirst({
     where: eq(repairs.id, repairId),
@@ -27,7 +32,8 @@ export default async function RepairDetailPage({ params }: { params: Promise<{ i
     }
   });
 
-  if (!repairResult) return notFound();
+  // Teknisyen başkasına atanmış bir kaydı göremez (varlığını da öğrenemez).
+  if (!repairResult || !canAccessRepair(viewer, repairResult)) return notFound();
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">

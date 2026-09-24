@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Send, ImageIcon, Loader2, MessageCircle, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
 import { pusherClient } from "@/lib/pusher-client";
+import { repairChannel } from "@/lib/pusher-channels";
 
 interface Message {
   id: number;
@@ -43,7 +44,7 @@ export function CustomerChat({ repairId, currentUserId }: { repairId: number; cu
   useEffect(() => {
     if (!open) return;
     
-    const channel = pusherClient.subscribe(`repair-${repairId}`);
+    const channel = pusherClient.subscribe(repairChannel(repairId));
     channel.bind("new-message", (newMsg: Message) => {
       setMessages((prev) => {
         // Prevent duplicates
@@ -53,7 +54,7 @@ export function CustomerChat({ repairId, currentUserId }: { repairId: number; cu
     });
 
     return () => {
-      pusherClient.unsubscribe(`repair-${repairId}`);
+      pusherClient.unsubscribe(repairChannel(repairId));
     };
   }, [open, repairId]);
 
