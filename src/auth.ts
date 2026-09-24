@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { accounts, sessions, users, verificationTokens } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { normalizeEmail } from "@/lib/email";
+import { userEmailEquals } from "@/lib/db/user-email";
 
 // Rol ve ban durumunun JWT'de veritabanından yenilenme aralığı
 const ROLE_REFRESH_MS = 60 * 1000;
@@ -29,7 +31,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) return null;
         
         const user = await db.query.users.findFirst({
-          where: eq(users.email, credentials.email as string)
+          where: userEmailEquals(credentials.email as string)
         });
 
         if (!user) throw new Error("Bu e-posta adresine ait bir hesap bulunamadı.");
@@ -64,11 +66,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.otp) return null;
 
-        const email = credentials.email as string;
+        const email = normalizeEmail(credentials.email as string);
         const otp = credentials.otp as string;
 
         const user = await db.query.users.findFirst({
-          where: eq(users.email, email)
+          where: userEmailEquals(email)
         });
 
         if (!user) throw new Error("Bu e-posta adresine ait bir hesap bulunamadı.");

@@ -5,9 +5,11 @@ import { users, verificationTokens } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { sendEmail } from "@/lib/mail/smtp";
 import bcrypt from "bcryptjs";
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, normalizeEmail } from "@/lib/email";
+import { userEmailEquals } from "@/lib/db/user-email";
 
 export async function requestPasswordReset(email: string) {
-  const targetEmail = email.trim().toLowerCase();
+  const targetEmail = normalizeEmail(email);
   
   if (!targetEmail) {
     return { success: false, error: "Lütfen e-posta adresinizi giriniz." };
@@ -16,7 +18,7 @@ export async function requestPasswordReset(email: string) {
   try {
     // Check if user exists
     const user = await db.query.users.findFirst({
-      where: eq(users.email, targetEmail),
+      where: userEmailEquals(targetEmail),
     });
 
     // Secure practice: return success even if user doesn't exist to prevent email harvesting
@@ -82,14 +84,14 @@ export async function requestPasswordReset(email: string) {
 }
 
 export async function resetPassword(email: string, token: string, newPassword: string) {
-  const targetEmail = email.trim().toLowerCase();
+  const targetEmail = normalizeEmail(email);
   
   if (!targetEmail || !token || !newPassword) {
     return { success: false, error: "Lütfen tüm bilgileri eksiksiz doldurunuz." };
   }
 
-  if (newPassword.length < 6) {
-    return { success: false, error: "Şifreniz en az 6 karakterden oluşmalıdır." };
+  if (newPassword.length < MIN_PASSWORD_LENGTH || newPassword.length > MAX_PASSWORD_LENGTH) {
+    return { success: false, error: `Şifreniz en az ${MIN_PASSWORD_LENGTH}, en fazla ${MAX_PASSWORD_LENGTH} karakter olmalıdır.` };
   }
 
   try {
@@ -110,8 +112,15 @@ export async function resetPassword(email: string, token: string, newPassword: s
       return { success: false, error: "Bu sıfırlama bağlantısının süresi dolmuş." };
     }
 
-    const salt = bcrypt.genSaltSync(10);
-    const hashedPassword = bcrypt.hashSync(newPassword, salt);
+    const user = await db.query.users.findFirst({
+      where: userEmailEquals(targetEmail),
+      columns: { id: true },
+    });
+    if (!user) {
+      return { success: false, error: "Geçersiz veya hatalı şifre sıfırlama kodu." };
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update user password
     await db.update(users)
@@ -119,7 +128,7 @@ export async function resetPassword(email: string, token: string, newPassword: s
         passwordHash: hashedPassword,
         updatedAt: new Date()
       })
-      .where(eq(users.email, targetEmail));
+      .where(eq(users.id, user.id));
 
     // Delete token
     await db.delete(verificationTokens)

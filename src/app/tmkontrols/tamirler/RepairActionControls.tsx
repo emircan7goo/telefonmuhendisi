@@ -3,6 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { updateRepairStatus, offerPrice } from "./actions";
+import { REPAIR_STATUS_META, normalizeRepairStatus, staffStatusOptions } from "@/lib/repair-status";
 
 export function RepairActionControls({ 
   repairId, 
@@ -15,18 +16,20 @@ export function RepairActionControls({
   finalPrice: string | null; 
   estimatedPrice: string | null; 
 }) {
-  const [currentStatus, setCurrentStatus] = useState(status);
+  const [currentStatus, setCurrentStatus] = useState<string>(normalizeRepairStatus(status));
   const [currentPrice, setCurrentPrice] = useState(estimatedPrice || finalPrice || "");
   const [loading, setLoading] = useState(false);
 
   const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value;
+    const previousStatus = currentStatus;
     setCurrentStatus(newStatus);
     setLoading(true);
     try {
       await updateRepairStatus(repairId, newStatus);
       toast.success("Durum güncellendi.");
     } catch (err: any) {
+      setCurrentStatus(previousStatus);
       toast.error(err.message);
     } finally {
       setLoading(false);
@@ -56,13 +59,9 @@ export function RepairActionControls({
           onChange={handleStatusChange}
           className="text-xs font-bold bg-white/80 border border-slate-200 rounded-lg px-3 py-2 outline-none text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 transition-shadow w-36 disabled:opacity-50"
         >
-          <option value="pending">Beklemede</option>
-          <option value="diagnosing">Arıza Tespiti</option>
-          <option value="awaiting_customer_approval">Müşteri Onayı Bekliyor</option>
-          <option value="customer_counter_offer">Müşteri Teklifi (Pazarlık)</option>
-          <option value="in_progress">İşlemde</option>
-          <option value="completed">Tamamlandı</option>
-          <option value="cancelled">İptal Edildi</option>
+          {staffStatusOptions(currentStatus).map((value) => (
+            <option key={value} value={value}>{REPAIR_STATUS_META[value].label}</option>
+          ))}
         </select>
       </td>
       <td className="px-6 py-4">

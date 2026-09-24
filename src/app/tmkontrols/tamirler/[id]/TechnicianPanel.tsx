@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Wrench, CircleDollarSign, ClipboardList, Image as ImageIcon, Loader2, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { updateRepairDetails } from "./actions";
+import { REPAIR_STATUS_META, normalizeRepairStatus, staffStatusOptions } from "@/lib/repair-status";
 
 interface TechnicianPanelProps {
   repairId: number;
@@ -16,20 +17,6 @@ interface TechnicianPanelProps {
   initialRepairImage: string | null;
 }
 
-const REPAIR_STATUS_OPTIONS = [
-  { value: "pending", label: "Talep Alındı", color: "text-slate-500" },
-  { value: "diagnosing", label: "Arıza Tespiti", color: "text-blue-500" },
-  { value: "awaiting_customer_approval", label: "Onay Bekliyor", color: "text-amber-500" },
-  { value: "negotiating", label: "Pazarlık / İletişim", color: "text-orange-500" },
-  { value: "customer_agreed", label: "Kargo Bekleniyor", color: "text-blue-500" },
-  { value: "shipped_to_shop", label: "Kargoda (Bize Geliyor)", color: "text-indigo-500" },
-  { value: "received_by_shop", label: "Dükkana Ulaştı", color: "text-purple-500" },
-  { value: "in_progress", label: "Onarımda / İşlemde (Masada)", color: "text-rose-500" },
-  { value: "pending_payment", label: "EFT Bekleniyor", color: "text-teal-500" },
-  { value: "completed", label: "Tamamlandı / Teslim Edildi", color: "text-emerald-500" },
-  { value: "cancelled", label: "İptal Edildi", color: "text-red-500" }
-];
-
 export default function TechnicianPanel({
   repairId,
   repairType,
@@ -40,7 +27,8 @@ export default function TechnicianPanel({
   initialLaborCost,
   initialRepairImage
 }: TechnicianPanelProps) {
-  const [status, setStatus] = useState(initialStatus);
+  const [savedStatus, setSavedStatus] = useState(normalizeRepairStatus(initialStatus));
+  const [status, setStatus] = useState<string>(savedStatus);
   const [notes, setNotes] = useState(initialNotes || "");
   const [finalPrice, setFinalPrice] = useState(initialFinalPrice || "");
   const [partsCost, setPartsCost] = useState(initialPartsCost || "");
@@ -95,6 +83,7 @@ export default function TechnicianPanel({
       });
       
       if (res.success) {
+        setSavedStatus(normalizeRepairStatus(status));
         toast.success("Tamir detayları başarıyla güncellendi!");
       }
     } catch (err: any) {
@@ -124,9 +113,9 @@ export default function TechnicianPanel({
           onChange={(e) => setStatus(e.target.value)}
           className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
         >
-          {REPAIR_STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value} className="font-semibold text-slate-700">
-              {opt.label}
+          {staffStatusOptions(savedStatus).map((value) => (
+            <option key={value} value={value} className="font-semibold text-slate-700">
+              {REPAIR_STATUS_META[value].label}
             </option>
           ))}
         </select>
@@ -137,16 +126,19 @@ export default function TechnicianPanel({
           type="button"
           disabled={saving}
           onClick={async () => {
-            setStatus("in_progress");
             setSaving(true);
             try {
               const res = await updateRepairDetails(repairId, {
                 status: "in_progress",
                 notes, finalPrice, partsCost, laborCost: calculatedLabor.toString(), repairImage
               });
-              if (res.success) toast.success("Kargo teslim alındı, onarıma başlandı!");
-            } catch {
-              toast.error("Hata oluştu.");
+              if (res.success) {
+                setStatus("in_progress");
+                setSavedStatus("in_progress");
+                toast.success("Kargo teslim alındı, onarıma başlandı!");
+              }
+            } catch (err: any) {
+              toast.error(err.message || "Hata oluştu.");
             } finally {
               setSaving(false);
             }
@@ -177,16 +169,19 @@ export default function TechnicianPanel({
               type="button"
               disabled={saving || !finalPrice}
               onClick={async () => {
-                setStatus("negotiating");
                 setSaving(true);
                 try {
                   const res = await updateRepairDetails(repairId, {
-                    status: "negotiating",
+                    status: "awaiting_customer_approval",
                     notes, finalPrice, partsCost, laborCost: calculatedLabor.toString(), repairImage
                   });
-                  if (res.success) toast.success("Fiyat teklifi müşteriye sunuldu! Müşteri onayı bekleniyor.");
-                } catch {
-                  toast.error("Hata oluştu.");
+                  if (res.success) {
+                    setStatus("awaiting_customer_approval");
+                    setSavedStatus("awaiting_customer_approval");
+                    toast.success("Fiyat teklifi müşteriye sunuldu! Müşteri onayı bekleniyor.");
+                  }
+                } catch (err: any) {
+                  toast.error(err.message || "Hata oluştu.");
                 } finally {
                   setSaving(false);
                 }

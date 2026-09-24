@@ -28,6 +28,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { CustomerChatBox } from "./CustomerChatBox";
 import { CustomerStatusActions } from "./CustomerStatusActions";
+import { repairStatusMeta } from "@/lib/repair-status";
 
 type Repair = {
   id: number;
@@ -60,60 +61,11 @@ const STAGES = [
   { title: "Teslim / Tamamlandı", icon: CheckCircle2, desc: "İşlem bitti, cihaz size gönderildi veya teslim edildi." }
 ];
 
-const getStatusIndex = (status: string) => {
-  switch (status) {
-    case "pending":
-    case "awaiting_customer_approval":
-    case "negotiating":
-    case "customer_counter_offer":
-    case "cancelled":
-      return 0;
-    case "customer_agreed":
-    case "shipped_to_shop":
-      return 1;
-    case "received_by_shop":
-    case "received":
-    case "diagnosing":
-      return 2;
-    case "in_progress":
-    case "repairing":
-      return 3;
-    case "pending_payment":
-    case "completed":
-    case "shipped":
-    case "delivered":
-      return 4;
-    default:
-      return 0;
-  }
-};
+const getStatusIndex = (status: string) => repairStatusMeta(status).stage;
 
 const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "pending":
-      return { text: "Beklemede", color: "bg-slate-100 text-slate-700 border-slate-200" };
-    case "awaiting_customer_approval":
-    case "negotiating":
-    case "customer_counter_offer":
-      return { text: "Fiyat Onayı Bekleniyor", color: "bg-orange-50 text-orange-700 border-orange-200" };
-    case "customer_agreed":
-      return { text: "Kargo Bekleniyor", color: "bg-pink-50 text-pink-700 border-pink-200" };
-    case "shipped_to_shop":
-      return { text: "Kargoda", color: "bg-cyan-50 text-cyan-700 border-cyan-200" };
-    case "diagnosing":
-    case "received_by_shop":
-      return { text: "Arıza Tespiti", color: "bg-amber-50 text-amber-700 border-amber-200" };
-    case "in_progress":
-      return { text: "Onarımda (Masada)", color: "bg-blue-50 text-blue-700 border-blue-200 animate-pulse" };
-    case "pending_payment":
-      return { text: "Ödeme Bekleniyor", color: "bg-teal-50 text-teal-700 border-teal-200" };
-    case "completed":
-    case "shipped":
-    case "delivered":
-      return { text: "Tamamlandı", color: "bg-emerald-50 text-emerald-700 border-emerald-200" };
-    default:
-      return { text: "Talep Alındı", color: "bg-slate-100 text-slate-700 border-slate-200" };
-  }
+  const meta = repairStatusMeta(status);
+  return { text: meta.customerLabel, color: meta.badge };
 };
 
 function TakipPageContent() {

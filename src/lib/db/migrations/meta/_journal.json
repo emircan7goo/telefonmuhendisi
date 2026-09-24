@@ -22,6 +22,13 @@
       "when": 1790291282791,
       "tag": "0002_drop_override_password",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790380000000,
+      "tag": "0003_normalize_repair_status",
+      "breakpoints": true
     }
   ]
 }

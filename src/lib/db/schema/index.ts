@@ -171,7 +171,7 @@ export const repairs = pgTable("repairs", {
   deviceModel: text("device_model").notNull(),
   imei: text("imei"),
   issueDescription: text("issue_description").notNull(),
-  status: text("status").default("pending").notNull(), // pending, pending_quote, negotiating, customer_agreed, shipped_to_shop, received_by_shop, in_progress, pending_payment, completed, cancelled
+  status: text("status").default("pending").notNull(), // Geçerli değerler ve geçişler: src/lib/repair-status.ts
   repairType: text("repair_type").notNull(), // instore, cargo, remote
   estimatedPrice: decimal("estimated_price", { precision: 10, scale: 2 }),
   finalPrice: decimal("final_price", { precision: 10, scale: 2 }),

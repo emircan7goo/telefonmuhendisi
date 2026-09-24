@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { repairStatusMeta } from "@/lib/repair-status";
 
 export const resend = new Resend(process.env.RESEND_API_KEY || "re_test_123456");
 
@@ -29,12 +30,6 @@ export async function sendOrderConfirmationEmail(email: string, orderId: number,
 
 export async function sendRepairStatusEmail(email: string, repairId: number, status: string, deviceModel: string) {
   try {
-    const statusText: Record<string, string> = {
-      pending: "Cihaz Bekleniyor",
-      in_progress: "Arıza Tespiti / Onarım Aşamasında",
-      completed: "Tamamlandı (Teslime Hazır)",
-      cancelled: "İptal Edildi"
-    };
 
     await resend.emails.send({
       from: "Telefon Mühendisi <servis@telefonmuhendisi.com>",
@@ -45,7 +40,7 @@ export async function sendRepairStatusEmail(email: string, repairId: number, sta
           <h2>Cihazınızın Durumu Güncellendi</h2>
           <p>Değerli Müşterimiz,</p>
           <p><strong>${deviceModel}</strong> model cihazınızın servis durumu güncellenmiştir.</p>
-          <p>Yeni Durum: <strong>${statusText[status] || status}</strong></p>
+          <p>Yeni Durum: <strong>${repairStatusMeta(status).customerLabel}</strong></p>
           <p>Tamir sürecinizi <a href="https://telefonmuhendisi.com/takip">Takip sayfamızdan</a> (REP-${repairId}) koduyla kontrol edebilirsiniz.</p>
           <br/>
           <p>Telefon Mühendisi Servis Ekibi</p>

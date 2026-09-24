@@ -5,6 +5,7 @@ import { Send, Image as ImageIcon, Loader2, ArrowUpRight, CheckCircle2 } from "l
 import toast from "react-hot-toast";
 import { sendInboxMessage } from "./actions";
 import Link from "next/link";
+import { repairStatusMeta } from "@/lib/repair-status";
 
 interface Message {
   id: number;
@@ -35,16 +36,6 @@ interface InboxChatWindowProps {
   messages: Message[];
   currentUserId: string;
 }
-
-const REPAIR_STATUS_MAP: Record<string, { label: string; color: string }> = {
-  pending: { label: "Beklemede", color: "bg-amber-100 text-amber-700" },
-  diagnosing: { label: "Arıza Tespiti", color: "bg-blue-100 text-blue-700" },
-  awaiting_customer_approval: { label: "Onay Bekliyor", color: "bg-purple-100 text-purple-700" },
-  customer_counter_offer: { label: "Pazarlık", color: "bg-orange-100 text-orange-700" },
-  in_progress: { label: "İşlemde", color: "bg-indigo-100 text-indigo-700" },
-  completed: { label: "Tamamlandı", color: "bg-emerald-100 text-emerald-700" },
-  cancelled: { label: "İptal Edildi", color: "bg-red-100 text-red-700" },
-};
 
 export default function InboxChatWindow({ repair, messages, currentUserId }: InboxChatWindowProps) {
   const [text, setText] = useState("");
@@ -107,8 +98,8 @@ export default function InboxChatWindow({ repair, messages, currentUserId }: Inb
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-slate-800 text-sm">{repair.user?.name || "İsimsiz Müşteri"}</span>
-              <span className={`px-2 py-0.5 rounded text-[9px] font-black ${REPAIR_STATUS_MAP[repair.status]?.color || "bg-slate-100"}`}>
-                {REPAIR_STATUS_MAP[repair.status]?.label || repair.status}
+              <span className={`px-2 py-0.5 rounded text-[9px] font-black ${repairStatusMeta(repair.status).badge}`}>
+                {repairStatusMeta(repair.status).label}
               </span>
             </div>
             <p className="text-[11px] font-medium text-slate-500 mt-0.5">{repair.deviceModel} • {repair.finalPrice || repair.estimatedPrice || 0} ₺</p>

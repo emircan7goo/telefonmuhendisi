@@ -8,18 +8,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import InboxChatWindow from "./InboxChatWindow";
 import { MessageSquare, Calendar, Sparkles } from "lucide-react";
+import { repairStatusMeta } from "@/lib/repair-status";
 
 export const dynamic = "force-dynamic";
-
-const REPAIR_STATUS_MAP: Record<string, { label: string; color: string }> = {
-  pending: { label: "Beklemede", color: "bg-amber-100 text-amber-700" },
-  diagnosing: { label: "Arıza Tespiti", color: "bg-blue-100 text-blue-700" },
-  awaiting_customer_approval: { label: "Onay Bekliyor", color: "bg-purple-100 text-purple-700" },
-  customer_counter_offer: { label: "Pazarlık", color: "bg-orange-100 text-orange-700" },
-  in_progress: { label: "İşlemde", color: "bg-indigo-100 text-indigo-700" },
-  completed: { label: "Tamamlandı", color: "bg-emerald-100 text-emerald-700" },
-  cancelled: { label: "İptal Edildi", color: "bg-red-100 text-red-700" },
-};
 
 export default async function UnifiedInboxPage({
   searchParams
@@ -113,8 +104,8 @@ export default async function UnifiedInboxPage({
                       : "Sohbet başlatılmadı..."
                     }
                   </p>
-                  <span className={`px-2 py-0.5 rounded text-[8px] font-black ${REPAIR_STATUS_MAP[item.status]?.color || "bg-slate-100"}`}>
-                    {REPAIR_STATUS_MAP[item.status]?.label || item.status}
+                  <span className={`px-2 py-0.5 rounded text-[8px] font-black ${repairStatusMeta(item.status).badge}`}>
+                    {repairStatusMeta(item.status).label}
                   </span>
                 </div>
 

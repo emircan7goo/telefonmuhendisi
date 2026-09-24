@@ -6,12 +6,16 @@ import { eq } from "drizzle-orm";
 import { requireAdmin } from "@/lib/authz";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { normalizeEmail } from "@/lib/email";
+import { userEmailEquals } from "@/lib/db/user-email";
 
-export async function createTechnician(name: string, email: string, password: string) {
+export async function createTechnician(name: string, rawEmail: string, password: string) {
   const admin = await requireAdmin();
+  const email = normalizeEmail(rawEmail);
+  if (!email) throw new Error("Geçerli bir e-posta adresi girin.");
 
   // Check if email exists
-  const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
+  const existing = await db.query.users.findFirst({ where: userEmailEquals(email) });
   if (existing) {
     throw new Error("Bu e-posta adresi zaten kullanımda.");
   }

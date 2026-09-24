@@ -7,6 +7,7 @@ import Link from "next/link";
 import { sendEmailVerificationCode, verifyEmailAndRegister } from "./actions";
 import { signIn } from "next-auth/react";
 import toast from "react-hot-toast";
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "@/lib/email";
 
 export default function RegisterPage() {
   const [isHovering, setIsHovering] = useState(false);
@@ -16,6 +17,8 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   
   // Step 2: E-posta Verification OTP
@@ -35,6 +38,14 @@ export default function RegisterPage() {
     e.preventDefault();
     if (!acceptedTerms) {
       setError("Lütfen kullanıcı sözleşmesini onaylayın.");
+      return;
+    }
+    if (password.length < MIN_PASSWORD_LENGTH || password.length > MAX_PASSWORD_LENGTH) {
+      setError(`Şifreniz en az ${MIN_PASSWORD_LENGTH}, en fazla ${MAX_PASSWORD_LENGTH} karakter olmalıdır.`);
+      return;
+    }
+    if (password !== passwordConfirm) {
+      setError("Şifreler eşleşmiyor.");
       return;
     }
     
@@ -62,20 +73,24 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const res = await verifyEmailAndRegister(name, phone, email, code);
+      const res = await verifyEmailAndRegister(name, phone, email, code, password);
       if (!res.success) {
         setError(res.error || "Doğrulama başarısız.");
         setIsLoading(false);
         return;
       }
 
-      toast.success("E-posta adresiniz doğrulandı! Kayıt işleminiz tamamlandı. Lütfen giriş yapınız.");
-      // Prod'da SMS ile otomatik giriş kapalı olduğu için direkt giriş sayfasına yönlendiriyoruz
-      setTimeout(() => {
-        const searchParams = new URLSearchParams(window.location.search);
-        const cb = searchParams.get("callbackUrl");
-        window.location.href = cb ? `/giris?registered=true&callbackUrl=${encodeURIComponent(cb)}` : "/giris?registered=true";
-      }, 1500);
+      toast.success("E-posta adresiniz doğrulandı! Kayıt işleminiz tamamlandı.");
+
+      // Yeni belirlenen şifreyle otomatik giriş; olmazsa giriş sayfasına yönlendir
+      const cb = new URLSearchParams(window.location.search).get("callbackUrl");
+      const safeCb = cb && cb.startsWith("/") && !cb.startsWith("//") ? cb : null;
+      const login = await signIn("email-password", { email: email.trim().toLowerCase(), password, redirect: false });
+      if (login && !login.error) {
+        window.location.href = safeCb || "/profil";
+        return;
+      }
+      window.location.href = safeCb ? `/giris?registered=true&callbackUrl=${encodeURIComponent(safeCb)}` : "/giris?registered=true";
     } catch (err: any) {
       setError("Kayıt tamamlanırken bir bağlantı hatası oluştu.");
       setIsLoading(false);
@@ -230,6 +245,43 @@ export default function RegisterPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="ornek@email.com"
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-12 pr-4 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all peer"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Password Inputs */}
+                      <div className="relative group">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Şifre</label>
+                        <div className="relative">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                          <input 
+                            type="password"
+                            required
+                            autoComplete="new-password"
+                            minLength={MIN_PASSWORD_LENGTH}
+                            maxLength={MAX_PASSWORD_LENGTH}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder={`En az ${MIN_PASSWORD_LENGTH} karakter`}
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-12 pr-4 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all peer"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="relative group">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Şifre (Tekrar)</label>
+                        <div className="relative">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                          <input 
+                            type="password"
+                            required
+                            autoComplete="new-password"
+                            minLength={MIN_PASSWORD_LENGTH}
+                            maxLength={MAX_PASSWORD_LENGTH}
+                            value={passwordConfirm}
+                            onChange={(e) => setPasswordConfirm(e.target.value)}
+                            placeholder="Şifrenizi tekrar girin"
                             className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-12 pr-4 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all peer"
                           />
                         </div>

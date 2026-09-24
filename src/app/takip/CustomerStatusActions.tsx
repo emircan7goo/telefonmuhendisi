@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Truck, CreditCard, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { acceptedStatusFor, normalizeRepairStatus } from "@/lib/repair-status";
 
 export function CustomerStatusActions({ 
   repairId, 
@@ -19,21 +20,22 @@ export function CustomerStatusActions({
 }) {
   const [loading, setLoading] = useState(false);
   const [trackingCode, setTrackingCode] = useState("");
+  const current = normalizeRepairStatus(status);
 
   const handleApproveQuote = async () => {
     setLoading(true);
     try {
-      const nextStatus = repairType === "cargo" ? "customer_agreed" : "in_progress";
+      const nextStatus = acceptedStatusFor(repairType || "");
       const res = await fetch(`/api/repairs/${repairId}/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStatus })
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error);
       toast.success(repairType === "cargo" ? "Teklifi onayladınız! Lütfen kargo adımlarını takip edin." : "Teklifi onayladınız! Onarım işlemi başlıyor.");
       onRefresh();
-    } catch {
-      toast.error("İşlem sırasında hata oluştu.");
+    } catch (err: any) {
+      toast.error(err?.message || "İşlem sırasında hata oluştu.");
     } finally {
       setLoading(false);
     }
@@ -47,17 +49,17 @@ export function CustomerStatusActions({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "shipped_to_shop", customerTrackingCode: trackingCode })
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error);
       toast.success("Kargoya verme bilginiz teknisyene iletildi.");
       onRefresh();
-    } catch {
-      toast.error("İşlem sırasında hata oluştu.");
+    } catch (err: any) {
+      toast.error(err?.message || "İşlem sırasında hata oluştu.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (status === "negotiating" && finalPrice) {
+  if (current === "awaiting_customer_approval" && finalPrice) {
     return (
       <div className="bg-orange-50 border border-orange-200 p-4 rounded-2xl flex flex-col items-center justify-center space-y-3 mt-6">
         <p className="text-orange-800 text-sm text-center font-medium">
@@ -74,7 +76,7 @@ export function CustomerStatusActions({
     );
   }
 
-  if (status === "customer_agreed") {
+  if (current === "customer_agreed") {
     return (
       <div className="bg-blue-50 border border-blue-200 p-5 rounded-2xl mt-6 space-y-4">
         <div className="text-center space-y-1">
@@ -111,7 +113,7 @@ export function CustomerStatusActions({
     );
   }
 
-  if (status === "shipped_to_shop") {
+  if (current === "shipped_to_shop") {
     return (
       <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl flex items-center gap-4 mt-6">
         <Truck className="w-6 h-6 text-indigo-600 shrink-0" />
@@ -122,7 +124,7 @@ export function CustomerStatusActions({
     );
   }
 
-  if (status === "pending_payment") {
+  if (current === "pending_payment") {
     return (
       <div className="bg-teal-50 border border-teal-200 p-5 rounded-2xl mt-6 space-y-4">
         <div className="text-center space-y-1">

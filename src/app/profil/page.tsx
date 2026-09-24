@@ -8,6 +8,7 @@ import Link from "next/link";
 import { FloatingUI } from "@/components/ui/FloatingUI";
 import { signOut } from "@/auth";
 import { RepairAcceptButton } from "./RepairAcceptButton";
+import { normalizeRepairStatus, repairStatusMeta } from "@/lib/repair-status";
 import { CustomerChat } from "@/components/ui/CustomerChat";
 
 export const dynamic = "force-dynamic";
@@ -64,20 +65,6 @@ export default async function ProfilePage() {
     "cancelled": { label: "İptal Edildi", color: "text-red-600 bg-red-50" },
   };
 
-  const repairStatusMap: Record<string, { label: string, color: string }> = {
-    "pending":                    { label: "Talep Alındı", color: "text-amber-600 bg-amber-50" },
-    "pending_quote":              { label: "Fiyat Hazırlanıyor", color: "text-amber-600 bg-amber-50" },
-    "awaiting_customer_approval": { label: "Onayınız Bekleniyor", color: "text-amber-700 bg-amber-100" },
-    "customer_counter_offer":     { label: "Teklifiniz İnceleniyor", color: "text-indigo-700 bg-indigo-100" },
-    "negotiating":                { label: "Fiyat Görüşmesi", color: "text-indigo-600 bg-indigo-50" },
-    "customer_agreed":            { label: "Fiyat Onaylandı", color: "text-teal-600 bg-teal-50" },
-    "shipped_to_shop":            { label: "Kargoda (Bize Geliyor)", color: "text-blue-500 bg-blue-50" },
-    "received_by_shop":           { label: "Teslim Alındı", color: "text-blue-600 bg-blue-50" },
-    "in_progress":                { label: "Onarımda", color: "text-blue-700 bg-blue-100" },
-    "pending_payment":            { label: "Ödeme Bekleniyor", color: "text-orange-600 bg-orange-50" },
-    "completed":                  { label: "Tamamlandı ✓", color: "text-emerald-600 bg-emerald-50" },
-    "cancelled":                  { label: "İptal", color: "text-red-600 bg-red-50" },
-  };
 
   return (
     <div className="relative min-h-screen pt-32 pb-24 bg-slate-50">
@@ -261,8 +248,8 @@ export default async function ProfilePage() {
                           </p>
                           <h4 className="font-bold text-slate-900 text-lg">{repair.deviceModel}</h4>
                         </div>
-                        <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${repairStatusMap[repair.status]?.color || 'bg-slate-100 text-slate-600'}`}>
-                          {repairStatusMap[repair.status]?.label || repair.status}
+                        <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${repairStatusMeta(repair.status).badge}`}>
+                          {repairStatusMeta(repair.status).customerLabel}
                         </span>
                       </div>
                       
@@ -271,12 +258,12 @@ export default async function ProfilePage() {
                       </p>
 
                       {/* Fiyat Onay Kısmı */}
-                      {repair.status === "awaiting_customer_approval" && repair.estimatedPrice && (
+                      {normalizeRepairStatus(repair.status) === "awaiting_customer_approval" && repair.estimatedPrice && (
                         <RepairAcceptButton repairId={repair.id} price={repair.estimatedPrice} />
                       )}
 
                       {/* Onaylanmış Kargo veya WhatsApp Mesajı */}
-                      {(repair.status === "in_progress" || repair.status === "completed") && repair.repairType === "cargo" && (
+                      {normalizeRepairStatus(repair.status) === "customer_agreed" && repair.repairType === "cargo" && (
                         <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
                           <div className="text-xs font-black uppercase text-slate-400 mb-1">Kargo Gönderim Bilgileri</div>
                           <div className="text-sm font-medium text-slate-700">Firma: <span className="font-bold">Yurtiçi Kargo</span></div>

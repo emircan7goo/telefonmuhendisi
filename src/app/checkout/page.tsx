@@ -62,17 +62,15 @@ export default function CheckoutPage() {
       fullAddress: formData.fullAddress,
     };
 
+    // Fiyat ve toplam gönderilmez: sunucu ürün fiyatlarını, kuponu ve stoğu veritabanından doğrular.
     const res = await createOrder({
-      totalAmount: (getCartTotal() - (appliedCoupon?.discountAmount || 0)),
       couponCode: appliedCoupon?.code,
-      discountAmount: appliedCoupon?.discountAmount || 0,
       shippingAddress: addressObj,
       billingAddress: addressObj, // Same for demo
       paymentMethod,
       items: items.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
-        price: item.price
       }))
     });
 

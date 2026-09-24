@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { initializeCheckoutForm } from "@/lib/iyzico";
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { products } from "@/lib/db/schema";
+import { and, eq, inArray } from "drizzle-orm";
+import { fromKurus, toKurus } from "@/lib/orders/pricing";
 
 export async function POST(req: Request) {
   try {
@@ -9,18 +13,47 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { cartItems, totalAmount, shippingAddress, billingAddress } = await req.json();
+    const { cartItems, shippingAddress, billingAddress } = await req.json();
 
-    if (!cartItems || cartItems.length === 0) {
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
     }
+
+    // Tutarlar istemciden alınmaz: sepet veritabanındaki güncel fiyatlarla hesaplanır.
+    const quantities = new Map<number, number>();
+    for (const item of cartItems) {
+      const productId = Number(item?.productId);
+      const quantity = Number(item?.quantity);
+      if (!Number.isInteger(productId) || !Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
+        return NextResponse.json({ error: "Invalid cart item" }, { status: 400 });
+      }
+      quantities.set(productId, (quantities.get(productId) ?? 0) + quantity);
+    }
+
+    const dbProducts = await db
+      .select({ id: products.id, name: products.name, price: products.price, stock: products.stock })
+      .from(products)
+      .where(and(inArray(products.id, [...quantities.keys()]), eq(products.isActive, true)));
+
+    if (dbProducts.length !== quantities.size || dbProducts.some((p) => p.stock < quantities.get(p.id)!)) {
+      return NextResponse.json({ error: "Sepetteki bazı ürünler satışta değil veya stokta yok." }, { status: 409 });
+    }
+
+    const basketItems = dbProducts.map((p) => ({
+      id: p.id.toString(),
+      name: p.name,
+      category1: "Elektronik",
+      itemType: "PHYSICAL",
+      price: fromKurus(toKurus(p.price) * quantities.get(p.id)!),
+    }));
+    const totalAmount = fromKurus(basketItems.reduce((sum, item) => sum + toKurus(item.price), 0));
 
     // Prepare Iyzico Request
     const request = {
       locale: "TR",
       conversationId: `order_${Date.now()}`,
-      price: totalAmount.toString(),
-      paidPrice: totalAmount.toString(),
+      price: totalAmount,
+      paidPrice: totalAmount,
       currency: "TRY",
       basketId: `basket_${Date.now()}`,
       paymentGroup: "PRODUCT",
@@ -55,13 +88,7 @@ export async function POST(req: Request) {
         address: billingAddress.address,
         zipCode: billingAddress.zipCode
       },
-      basketItems: cartItems.map((item: any) => ({
-        id: item.productId.toString(),
-        name: item.name,
-        category1: "Elektronik",
-        itemType: "PHYSICAL",
-        price: (item.price * item.quantity).toString()
-      }))
+      basketItems
     };
 
     const result = await initializeCheckoutForm(request);

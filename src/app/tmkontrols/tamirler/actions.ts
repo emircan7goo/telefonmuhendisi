@@ -5,24 +5,22 @@ import { repairs, users, auditLogs } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { claimFor, requireAdmin, requireRepairAccess } from "@/lib/authz";
+import { parsePrice } from "@/lib/repair-status";
+import { transitionRepair } from "@/lib/repairs/transition";
 
 export async function updateRepairStatus(repairId: number, status: string) {
   const { user, repair } = await requireRepairAccess(repairId, { staffOnly: true });
 
-  let finalPrice = repair.finalPrice;
-  if ((status === "in_progress" || status === "completed") && !finalPrice && repair.estimatedPrice) {
-    finalPrice = repair.estimatedPrice;
-  }
-
-  await db.update(repairs)
-    .set({ status, finalPrice, ...claimFor(user, repair), updatedAt: new Date() })
-    .where(eq(repairs.id, repairId));
-  
-  await db.insert(auditLogs).values({
-    userId: user.id as string,
-    action: "UPDATE_REPAIR_STATUS",
-    target: repairId.toString(),
-    details: `Tamir #${repairId} durumu '${status}' olarak güncellendi.`
+  await transitionRepair({
+    repair,
+    actor: "staff",
+    userId: user.id,
+    to: status,
+    set: claimFor(user, repair),
+    audit: {
+      action: "UPDATE_REPAIR_STATUS",
+      details: `Tamir #${repairId} durumu '${repair.status}' → '${status}' olarak güncellendi.`,
+    },
   });
 
   revalidatePath("/tmkontrols/tamirler");
@@ -55,23 +53,20 @@ export async function assignTechnician(repairId: number, technicianId: string) {
 export async function offerPrice(repairId: number, price: string) {
   const { user, repair } = await requireRepairAccess(repairId, { staffOnly: true });
 
-  const notes = `${repair.notes || ""}\n[YÖNETİM]: Müşteriye yeni fiyat teklifi sunuldu: ${price} ₺`.trim();
+  const offered = parsePrice(price);
+  if (!offered) throw new Error("Geçerli bir fiyat girin.");
 
-  await db.update(repairs)
-    .set({ 
-      estimatedPrice: price, 
-      status: "awaiting_customer_approval", 
-      notes,
-      ...claimFor(user, repair),
-      updatedAt: new Date() 
-    })
-    .where(eq(repairs.id, repairId));
-  
-  await db.insert(auditLogs).values({
-    userId: user.id as string,
-    action: "OFFER_PRICE",
-    target: repairId.toString(),
-    details: `Tamir #${repairId} için ${price} ₺ fiyat teklifi sunuldu.`
+  const notes = `${repair.notes || ""}\n[YÖNETİM]: Müşteriye yeni fiyat teklifi sunuldu: ${offered} ₺`.trim();
+
+  // Yeni teklif, önceki kesinleşmiş fiyatı geçersiz kılar; müşteri onaylayınca yeniden kesinleşir.
+  await transitionRepair({
+    repair,
+    actor: "staff",
+    userId: user.id,
+    to: "awaiting_customer_approval",
+    set: { estimatedPrice: offered, finalPrice: null, notes, ...claimFor(user, repair) },
+    systemMessage: `Fiyat teklifi sunuldu: ${offered} ₺. Müşteri onayı bekleniyor.`,
+    audit: { action: "OFFER_PRICE", details: `Tamir #${repairId} için ${offered} ₺ fiyat teklifi sunuldu.` },
   });
 
   revalidatePath("/tmkontrols/tamirler");

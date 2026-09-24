@@ -19,20 +19,9 @@ import { sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import Link from "next/link";
 import AdminChartWrapper from "./AdminChartWrapper";
+import { repairStatusMeta } from "@/lib/repair-status";
 
 export const dynamic = "force-dynamic";
-
-const REPAIR_STATUS_MAP: Record<string, { label: string; color: string }> = {
-  pending: { label: "Beklemede", color: "bg-amber-100 text-amber-700" },
-  diagnosing: { label: "Arıza Tespiti", color: "bg-blue-100 text-blue-700" },
-  awaiting_customer_approval: { label: "Onay Bekliyor", color: "bg-purple-100 text-purple-700" },
-  customer_counter_offer: { label: "Pazarlık", color: "bg-orange-100 text-orange-700" },
-  awaiting_shipment: { label: "Kargo Bekleniyor", color: "bg-pink-100 text-pink-700" },
-  shipped_to_shop: { label: "Kargoda", color: "bg-cyan-100 text-cyan-700" },
-  in_progress: { label: "İşlemde", color: "bg-indigo-100 text-indigo-700" },
-  completed: { label: "Tamamlandı", color: "bg-emerald-100 text-emerald-700" },
-  cancelled: { label: "İptal Edildi", color: "bg-red-100 text-red-700" },
-};
 
 export default async function AdminDashboardPage() {
   const session = await auth();
@@ -497,8 +486,8 @@ export default async function AdminDashboardPage() {
                         {repair.finalPrice ? `${parseFloat(repair.finalPrice).toLocaleString('tr-TR')} ₺` : repair.estimatedPrice ? `${parseFloat(repair.estimatedPrice).toLocaleString('tr-TR')} ₺` : "-"}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className={`px-2 py-1 text-[9px] font-black rounded-md ${REPAIR_STATUS_MAP[repair.status]?.color || "bg-slate-100 text-slate-700"}`}>
-                          {REPAIR_STATUS_MAP[repair.status]?.label || repair.status}
+                        <span className={`px-2 py-1 text-[9px] font-black rounded-md ${repairStatusMeta(repair.status).badge}`}>
+                          {repairStatusMeta(repair.status).label}
                         </span>
                       </td>
                     </tr>

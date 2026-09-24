@@ -5,6 +5,8 @@ import { verificationTokens, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "@/lib/mail/smtp";
 import bcrypt from "bcryptjs";
+import { normalizeEmail } from "@/lib/email";
+import { userEmailEquals } from "@/lib/db/user-email";
 
 // ─── OTP Rate Limiter (in-memory, per-process) ───────────────────────────────
 // Format: email → { count, firstAttempt }
@@ -38,19 +40,20 @@ export async function verifyAdminCredentialsAndSendOTP(formData: {
   pass: string;
 }) {
   try {
-    const { email, pass } = formData;
+    const email = normalizeEmail(formData.email);
+    const { pass } = formData;
     if (!email || !pass) {
       return { success: false, error: "E-posta ve şifre gereklidir." };
     }
 
     // Rate limiting kontrolü
-    const rateLimit = checkOtpRateLimit(email.trim());
+    const rateLimit = checkOtpRateLimit(email);
     if (!rateLimit.allowed) {
       return { success: false, error: "Çok fazla hatalı deneme yaptınız. Lütfen 10 dakika bekleyin." };
     }
 
     const user = await db.query.users.findFirst({
-      where: eq(users.email, email.trim())
+      where: userEmailEquals(email)
     });
 
     if (!user) {

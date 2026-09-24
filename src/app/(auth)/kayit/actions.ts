@@ -4,9 +4,12 @@ import { db } from "@/lib/db";
 import { users, verificationTokens } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { sendEmail } from "@/lib/mail/smtp";
+import bcrypt from "bcryptjs";
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, normalizeEmail } from "@/lib/email";
+import { userEmailEquals } from "@/lib/db/user-email";
 
 export async function sendEmailVerificationCode(email: string) {
-  const targetEmail = email.trim().toLowerCase();
+  const targetEmail = normalizeEmail(email);
   
   if (!targetEmail) {
     return { success: false, error: "Lütfen geçerli bir e-posta adresi giriniz." };
@@ -14,7 +17,7 @@ export async function sendEmailVerificationCode(email: string) {
 
   // Check if email already exists
   const existingEmail = await db.query.users.findFirst({
-    where: eq(users.email, targetEmail)
+    where: userEmailEquals(targetEmail)
   });
 
   if (existingEmail) {
@@ -71,12 +74,16 @@ export async function sendEmailVerificationCode(email: string) {
   }
 }
 
-export async function verifyEmailAndRegister(name: string, phone: string, email: string, code: string) {
-  const targetEmail = email.trim().toLowerCase();
+export async function verifyEmailAndRegister(name: string, phone: string, email: string, code: string, password: string) {
+  const targetEmail = normalizeEmail(email);
   const cleanPhone = phone.replace(/\D/g, "");
 
-  if (!name.trim() || !cleanPhone || !targetEmail || !code.trim()) {
+  if (!name.trim() || !cleanPhone || !targetEmail || !code.trim() || !password) {
     return { success: false, error: "Lütfen tüm bilgileri eksiksiz doldurunuz." };
+  }
+
+  if (password.length < MIN_PASSWORD_LENGTH || password.length > MAX_PASSWORD_LENGTH) {
+    return { success: false, error: `Şifreniz en az ${MIN_PASSWORD_LENGTH}, en fazla ${MAX_PASSWORD_LENGTH} karakter olmalıdır.` };
   }
 
   // Check if phone already exists
@@ -90,7 +97,7 @@ export async function verifyEmailAndRegister(name: string, phone: string, email:
 
   // Check if email already exists
   const existingEmail = await db.query.users.findFirst({
-    where: eq(users.email, targetEmail)
+    where: userEmailEquals(targetEmail)
   });
 
   if (existingEmail) {
@@ -125,6 +132,8 @@ export async function verifyEmailAndRegister(name: string, phone: string, email:
       return { success: false, error: "Geçersiz veya süresi dolmuş doğrulama kodu." };
     }
 
+    const passwordHash = await bcrypt.hash(password, 10);
+
     // Insert user
     await db.insert(users).values({
       id: crypto.randomUUID(),
@@ -132,6 +141,7 @@ export async function verifyEmailAndRegister(name: string, phone: string, email:
       phone: cleanPhone,
       email: targetEmail,
       emailVerified: new Date(),
+      passwordHash,
       role: "customer"
     });
 
