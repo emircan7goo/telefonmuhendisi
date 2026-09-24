@@ -1,4 +1,3 @@
-import { auth } from "@/auth";
 import { InteractiveRepairUI } from "@/components/repair/InteractiveRepairUI";
 import { FloatingUI } from "@/components/ui/FloatingUI";
 
@@ -7,16 +6,14 @@ export const metadata = {
   description: "Cihazınızdaki sorunu tespit edin ve anında teklif alın.",
 };
 
-export default async function RepairPage() {
-  const session = await auth();
-
+export default function RepairPage() {
   return (
     <div className="relative min-h-screen pt-32 pb-8 overflow-hidden z-10">
       <FloatingUI />
       
       <div className="container-custom">
          {/* 3D Interactive UI Component */}
-         <InteractiveRepairUI session={session} />
+         <InteractiveRepairUI />
       </div>
     </div>
   );

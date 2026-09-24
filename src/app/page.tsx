@@ -205,11 +205,9 @@ export default function HomePage() {
         <div className="container mx-auto px-4 md:px-6 relative flex flex-col items-center text-center max-w-4xl z-20">
 
           {/* Ana Başlık */}
-          <motion.h1
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.1, type: "spring", stiffness: 100 }}
-            className="font-black text-gray-900 tracking-tighter leading-[1.06] mb-3 md:mb-5 px-2"
+          {/* CSS animasyonu: JS yüklenmesini beklemeden görünür (LCP) */}
+          <h1
+            className="hero-in font-black text-gray-900 tracking-tighter leading-[1.06] mb-3 md:mb-5 px-2"
             style={{
               fontFamily: "var(--font-heading)",
               fontSize: "clamp(3rem, 11vw, 4.5rem)",
@@ -223,17 +221,15 @@ export default function HomePage() {
               </span>
             </span>{" "}
             Emanet Edin.
-          </motion.h1>
+          </h1>
 
           {/* Typewriter (İzole - Sadece bu bileşen güncellenir) */}
           <HeroTypewriter />
 
           {/* CTA Butonu + Rozetler */}
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3 }}
-            className="flex flex-col items-center gap-3 w-full"
+          <div
+            className="hero-in flex flex-col items-center gap-3 w-full"
+            style={{ animationDelay: "120ms" }}
           >
             <Link
               href="/tamir"
@@ -243,7 +239,7 @@ export default function HomePage() {
               <span className="relative z-10">Ücretsiz Fiyat Al</span>
               <ArrowRight className="w-4 h-4 md:w-5 md:h-5 relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
             </Link>
-          </motion.div>
+          </div>
         </div>
 
         {/* ── Scroll Down Indicator — Sadece Mobil ── */}

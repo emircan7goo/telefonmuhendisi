@@ -7,8 +7,11 @@ import { Smartphone, CheckCircle2, ChevronRight, Apple, ArrowLeft, PenTool, Cpu,
 import { DEVICE_DATABASE, Brand, DeviceModel, RepairOption } from "@/data/devices";
 import { createRepairTicket } from "@/app/tamir-onay/actions";
 import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
 
-export function InteractiveRepairUI({ session }: { session?: any }) {
+export function InteractiveRepairUI() {
+  // Oturum istemci tarafında okunur — /tamir sayfası statik kalır (hızlı açılır)
+  const { data: session } = useSession();
   const [step, setStep] = useState<number>(1);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [selectedModel, setSelectedModel] = useState<DeviceModel | null>(null);
