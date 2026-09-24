@@ -43,6 +43,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("Hatalı şifre girdiniz.");
         }
 
+        // Personel hesapları 2FA'yı atlayamasın: sadece "admin-2fa" provider'ı ile girebilirler.
+        if (user.role === "admin" || user.role === "technician") {
+          throw new Error("Personel hesapları yalnızca yönetici giriş sayfasından (2FA ile) giriş yapabilir.");
+        }
+
         return { id: user.id, email: user.email, role: user.role, name: user.name };
       }
     }),

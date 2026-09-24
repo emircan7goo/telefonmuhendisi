@@ -5,14 +5,21 @@ import { devicePurchases, notifications, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { sendEmail } from "@/lib/mail/smtp";
+import { auth } from "@/auth";
+import { contactUserColumns } from "@/lib/db/safe-columns";
 
 export async function makeOffer(data: { id: number; price: number; notes: string }) {
+  const session = await auth();
+  if (!session?.user || (session.user as any).role !== "admin") {
+    return { success: false, error: "Yetkisiz erişim: Bu işlem için Admin yetkisi gereklidir." };
+  }
+
   try {
     // Check if the purchase exists
     const purchase = await db.query.devicePurchases.findFirst({
       where: eq(devicePurchases.id, data.id),
       with: {
-        user: true,
+        user: { columns: contactUserColumns },
       }
     });
 

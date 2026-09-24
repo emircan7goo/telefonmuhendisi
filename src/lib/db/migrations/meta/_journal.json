@@ -15,6 +15,13 @@
       "when": 1788007657357,
       "tag": "0001_performance_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790291282791,
+      "tag": "0002_drop_override_password",
+      "breakpoints": true
     }
   ]
 }

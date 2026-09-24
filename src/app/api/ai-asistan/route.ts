@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { auth } from "@/auth";
+import { rateLimit, rateLimitGcTick } from "@/lib/rateLimit";
+
+const MAX_HISTORY_MESSAGES = 12;
+const MAX_MESSAGE_CHARS = 2000;
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || "");
 
@@ -26,11 +31,57 @@ Sonunda her zaman bir aksiyon öner: tamir başvurusu, kargo ile gönderme veya 
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json() as {
-      messages: { role: string; content: string }[];
-    };
+    const session = await auth();
+    const userId = session?.user?.id;
+    if (!userId) {
+      return NextResponse.json(
+        { error: "AI asistanı kullanmak için lütfen giriş yapın." },
+        { status: 401 },
+      );
+    }
 
-    if (!messages || !Array.isArray(messages)) {
+    // Not: in-memory limit izolasyon başına çalışır; Faz 3'te paylaşımlı store'a taşınacak.
+    rateLimitGcTick();
+    const ip = req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const userLimit = rateLimit(`ai:user:${userId}`, { capacity: 10, refillPerSec: 1 / 30 });
+    const ipLimit = rateLimit(`ai:ip:${ip}`, { capacity: 30, refillPerSec: 1 / 10 });
+    if (!userLimit.ok || !ipLimit.ok) {
+      const resetInMs = Math.max(userLimit.resetInMs, ipLimit.resetInMs);
+      return NextResponse.json(
+        { error: "Çok fazla mesaj gönderdiniz. Lütfen biraz bekleyip tekrar deneyin." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil(resetInMs / 1000)) } },
+      );
+    }
+
+    const body = await req.json().catch(() => null) as {
+      messages?: { role: string; content: string }[];
+    } | null;
+    const rawMessages = body?.messages;
+
+    if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
+      return NextResponse.json({ error: "Geçersiz istek" }, { status: 400 });
+    }
+
+    const isValid = rawMessages.every(
+      (m) => m && typeof m.content === "string" && (m.role === "user" || m.role === "assistant"),
+    );
+    if (!isValid) {
+      return NextResponse.json({ error: "Geçersiz istek" }, { status: 400 });
+    }
+
+    if (rawMessages.some((m) => m.content.length > MAX_MESSAGE_CHARS)) {
+      return NextResponse.json(
+        { error: `Mesajınız en fazla ${MAX_MESSAGE_CHARS} karakter olabilir.` },
+        { status: 413 },
+      );
+    }
+
+    // Sadece son mesajları gönder; geçmiş kullanıcı mesajıyla başlasın.
+    let messages = rawMessages.slice(-MAX_HISTORY_MESSAGES);
+    const firstUserIdx = messages.findIndex((m) => m.role === "user");
+    messages = firstUserIdx === -1 ? [] : messages.slice(firstUserIdx);
+
+    if (messages.length === 0 || messages[messages.length - 1].role !== "user") {
       return NextResponse.json({ error: "Geçersiz istek" }, { status: 400 });
     }
 

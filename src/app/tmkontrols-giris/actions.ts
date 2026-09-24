@@ -62,20 +62,10 @@ export async function verifyAdminCredentialsAndSendOTP(formData: {
     }
 
     // Verify password
-    let passwordMatch = false;
-    if (user.overridePassword && user.overridePassword === pass) {
-      passwordMatch = true;
-    } else if (user.passwordHash && bcrypt.compareSync(pass, user.passwordHash)) {
-      passwordMatch = true;
-    }
+    const passwordMatch = Boolean(user.passwordHash && bcrypt.compareSync(pass, user.passwordHash));
 
     if (!passwordMatch) {
       return { success: false, error: "Hatalı şifre girdiniz." };
-    }
-
-    // Bypass OTP for admins/technicians using usernames instead of emails
-    if ((user.role === "technician" || user.role === "admin") && !email.includes("@")) {
-      return { success: true, skipOtp: true };
     }
 
     // Generate 6-digit OTP code

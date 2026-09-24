@@ -5,6 +5,7 @@ import { users, sessions, auditLogs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { requestPasswordReset } from "@/app/(auth)/sifremi-unuttum/actions";
 
 async function verifyGodMode() {
   const session = await auth();
@@ -54,16 +55,27 @@ export async function changeRole(userId: string, newRole: "admin" | "technician"
   return { success: true };
 }
 
-export async function setOverridePassword(userId: string, newPassword: string) {
+export async function sendPasswordResetLink(userId: string) {
   const admin = await verifyGodMode();
-  await db.update(users).set({ overridePassword: newPassword }).where(eq(users.id, userId));
+  const target = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: { id: true, email: true },
+  });
+  if (!target?.email) {
+    throw new Error("Bu kullanıcının kayıtlı bir e-posta adresi yok.");
+  }
+
+  const result = await requestPasswordReset(target.email);
+  if (!result.success) {
+    throw new Error(result.error || "Sıfırlama bağlantısı gönderilemedi.");
+  }
+
   await db.insert(auditLogs).values({
     userId: admin.id,
-    action: "SET_OVERRIDE_PASSWORD",
+    action: "SEND_PASSWORD_RESET",
     target: userId,
-    details: "Yönetici tarafından açık metin şifre ataması yapıldı."
+    details: "Yönetici tarafından şifre sıfırlama bağlantısı gönderildi."
   });
-  revalidatePath("/tmkontrols/users");
   return { success: true };
 }
 

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { Search, ShieldAlert, Fingerprint, Activity, ShieldCheck, Mail, Phone, Smartphone, Monitor, Wrench, Lock } from "lucide-react";
+import { Search, ShieldAlert, Fingerprint, Activity, ShieldCheck, Mail, Phone, Smartphone, Monitor, Wrench } from "lucide-react";
 import { UserActionButtons } from "./UserActionButtons";
 
 export const dynamic = "force-dynamic";
@@ -74,13 +74,6 @@ export default async function AdminUsersPage() {
                           {user.id}
                         </div>
                       </div>
-                      {user.overridePassword && (
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <Lock className="w-3 h-3 text-red-500" />
-                          <span className="text-[10px] font-black tracking-widest text-red-500 uppercase">Override Şifre:</span>
-                          <span className="text-xs font-mono font-bold text-slate-900 bg-red-50 px-1.5 rounded">{user.overridePassword}</span>
-                        </div>
-                      )}
                       <div className="mt-1 flex gap-2">
                          <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
                            <Activity className="w-3 h-3" /> Sipariş: {(user as any).orders?.length || 0}
@@ -134,7 +127,7 @@ export default async function AdminUsersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <UserActionButtons userId={user.id} currentRole={user.role} overridePassword={user.overridePassword} />
+                    <UserActionButtons userId={user.id} currentRole={user.role} />
                   </td>
                 </tr>
               )})}

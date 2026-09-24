@@ -24,24 +24,8 @@ export default function AdminLoginForm() {
     try {
       const res = await verifyAdminCredentialsAndSendOTP({ email, pass: password });
       if (res.success) {
-        if (res.skipOtp) {
-          // Direct login for technicians using usernames
-          const result = await signIn("email-password", {
-            email,
-            password,
-            redirect: false,
-          });
-
-          if (result?.error) {
-            toast.error(result.error || "Giriş bilgileri hatalı.");
-          } else {
-            toast.success("Teknisyen girişi başarılı! Panele aktarılıyorsunuz...");
-            window.location.href = "/tmkontrols";
-          }
-        } else {
-          toast.success("Doğrulama kodu e-posta adresinize gönderildi!");
-          setStep("otp");
-        }
+        toast.success("Doğrulama kodu e-posta adresinize gönderildi!");
+        setStep("otp");
       } else {
         toast.error(res.error || "Giriş bilgileri doğrulanamadı.");
       }

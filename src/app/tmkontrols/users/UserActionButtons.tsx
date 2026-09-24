@@ -1,10 +1,10 @@
 "use client";
 
 import { Ban, KeyRound, UserCog, PowerOff, Trash2 } from "lucide-react";
-import { banUser, kickUser, changeRole, setOverridePassword, deleteUser } from "./actions";
+import { banUser, kickUser, changeRole, sendPasswordResetLink, deleteUser } from "./actions";
 import toast from "react-hot-toast";
 
-export function UserActionButtons({ userId, currentRole, overridePassword }: { userId: string, currentRole: string, overridePassword?: string | null }) {
+export function UserActionButtons({ userId, currentRole }: { userId: string, currentRole: string }) {
   
   const handleBan = async () => {
     if (confirm("Bu kullanıcıyı kalıcı olarak sistemden yasaklamak istediğinize emin misiniz?")) {
@@ -43,11 +43,10 @@ export function UserActionButtons({ userId, currentRole, overridePassword }: { u
   };
 
   const handlePassword = async () => {
-    const pwd = prompt("Açık metin olarak okunacak Yönetici Şifresini girin:\n(Kullanıcı bu şifreyle girebilir)", overridePassword || "");
-    if (pwd !== null) {
+    if (confirm("Kullanıcının e-posta adresine şifre sıfırlama bağlantısı gönderilsin mi?")) {
       try {
-        await setOverridePassword(userId, pwd);
-        toast.success("Yönetici şifresi atandı.");
+        await sendPasswordResetLink(userId);
+        toast.success("Şifre sıfırlama bağlantısı gönderildi.");
       } catch (err: any) {
         toast.error(err.message);
       }
@@ -70,7 +69,7 @@ export function UserActionButtons({ userId, currentRole, overridePassword }: { u
       <button onClick={handleRole} className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors tooltip" title="Yetki Düzenle">
         <UserCog className="w-4 h-4" />
       </button>
-      <button onClick={handlePassword} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors tooltip" title="Yönetici Şifresi Ata">
+      <button onClick={handlePassword} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors tooltip" title="Şifre Sıfırlama Bağlantısı Gönder">
         <KeyRound className="w-4 h-4" />
       </button>
       <button onClick={handleKick} className="p-2 text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors tooltip" title="Sistemden At (Kick)">

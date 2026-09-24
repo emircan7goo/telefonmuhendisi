@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { contactUserColumns, publicUserColumns } from "@/lib/db/safe-columns";
 import { repairs, repairMessages } from "@/lib/db/schema";
 import { eq, desc, asc, and } from "drizzle-orm";
 import { auth } from "@/auth";
@@ -40,10 +41,10 @@ export default async function UnifiedInboxPage({
   const queryRepairs = await db.query.repairs.findMany({
     where: isTech ? eq(repairs.technicianId, currentUserId) : undefined,
     with: {
-      user: true,
+      user: { columns: contactUserColumns },
       messages: {
         orderBy: [asc(repairMessages.createdAt)],
-        with: { user: true }
+        with: { user: { columns: publicUserColumns } }
       }
     },
     orderBy: [desc(repairs.updatedAt)]

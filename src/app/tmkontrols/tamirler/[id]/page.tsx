@@ -7,6 +7,7 @@ import { AdminChat } from "./AdminChat";
 import TechnicianPanel from "./TechnicianPanel";
 import { notFound } from "next/navigation";
 import { ImageViewer } from "@/components/ui/ImageViewer";
+import { contactUserColumns, publicUserColumns } from "@/lib/db/safe-columns";
 
 export const dynamic = "force-dynamic";
 
@@ -18,10 +19,10 @@ export default async function RepairDetailPage({ params }: { params: Promise<{ i
   const repairResult = await db.query.repairs.findFirst({
     where: eq(repairs.id, repairId),
     with: {
-      user: true,
+      user: { columns: contactUserColumns },
       messages: {
         orderBy: [asc(repairMessages.createdAt)],
-        with: { user: true }
+        with: { user: { columns: publicUserColumns } }
       }
     }
   });
@@ -102,13 +103,7 @@ export default async function RepairDetailPage({ params }: { params: Promise<{ i
           <AdminChat 
             repairId={repairResult.id} 
             initialMessages={repairResult.messages.map((m: any) => ({ ...m, createdAt: m.createdAt?.toISOString() }))} 
-            customer={{
-              ...repairResult.user,
-              createdAt: repairResult.user?.createdAt?.toISOString(),
-              updatedAt: repairResult.user?.updatedAt?.toISOString(),
-              emailVerified: repairResult.user?.emailVerified?.toISOString() || null,
-              lastLoginAt: repairResult.user?.lastLoginAt?.toISOString() || null,
-            }} 
+            customer={repairResult.user ?? null} 
           />
         </div>
 

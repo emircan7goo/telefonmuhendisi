@@ -79,7 +79,22 @@ export function AiAsistanWidget() {
         }),
       });
 
-      if (!response.ok) throw new Error("API error");
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        if (response.status === 401 || response.status === 413 || response.status === 429) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              role: "assistant",
+              content: errData?.error || "İsteğiniz şu anda işlenemiyor.",
+              timestamp: new Date(),
+            },
+          ]);
+          return;
+        }
+        throw new Error("API error");
+      }
 
       const data = await response.json();
       const assistantMsg: Message = {

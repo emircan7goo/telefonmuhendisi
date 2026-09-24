@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { repairs, orders } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { publicUserColumns } from "@/lib/db/safe-columns";
 
 export async function GET() {
   const session = await auth();
@@ -21,7 +22,7 @@ export async function GET() {
       with: {
         messages: {
           orderBy: (messages, { asc }) => [asc(messages.createdAt)],
-          with: { user: true }
+          with: { user: { columns: publicUserColumns } }
         }
       }
     });

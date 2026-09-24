@@ -128,6 +128,10 @@ export function InteractiveRepairUI() {
   };
 
   const handleUploadClick = () => {
+    if (!session?.user) {
+      toast.error("Fotoğraf eklemek için lütfen önce giriş yapın.");
+      return;
+    }
     fileInputRef.current?.click();
   };
 

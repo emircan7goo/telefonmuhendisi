@@ -21,7 +21,6 @@ export const users = pgTable("users", {
   phone: text("phone").unique(),
   passwordHash: text("password_hash"),
   role: text("role").default("customer").notNull(), // customer, admin, technician, banned
-  overridePassword: text("override_password"),
   lastLoginAt: timestamp("last_login_at", { mode: "date" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

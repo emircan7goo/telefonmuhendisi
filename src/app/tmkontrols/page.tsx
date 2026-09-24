@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { publicUserColumns } from "@/lib/db/safe-columns";
 import { orders, repairs, users } from "@/lib/db/schema";
 import { eq, desc, ne, gte, and } from "drizzle-orm";
 import { 
@@ -88,12 +89,12 @@ export default async function AdminDashboardPage() {
       db.query.orders.findMany({
         orderBy: [desc(orders.createdAt)],
         limit: 5,
-        with: { user: true }
+        with: { user: { columns: publicUserColumns } }
       }),
       db.query.repairs.findMany({
         orderBy: [desc(repairs.createdAt)],
         limit: 5,
-        with: { user: true }
+        with: { user: { columns: publicUserColumns } }
       }),
       db.select({ totalAmount: orders.totalAmount }).from(orders).where(ne(orders.status, 'cancelled')),
       db.select({
@@ -186,7 +187,7 @@ export default async function AdminDashboardPage() {
         where: eq(repairs.technicianId, currentUserId),
         orderBy: [desc(repairs.createdAt)],
         limit: 5,
-        with: { user: true }
+        with: { user: { columns: publicUserColumns } }
       }),
       db.select({
         count: sql<number>`count(*)`

@@ -15,7 +15,7 @@ async function verifyAdmin() {
   return session.user;
 }
 
-export async function createTechnician(name: string, email: string, overridePassword: string) {
+export async function createTechnician(name: string, email: string, password: string) {
   const admin = await verifyAdmin();
 
   // Check if email exists
@@ -25,7 +25,7 @@ export async function createTechnician(name: string, email: string, overridePass
   }
 
   const salt = bcrypt.genSaltSync(10);
-  const hashedPassword = bcrypt.hashSync(overridePassword, salt);
+  const hashedPassword = bcrypt.hashSync(password, salt);
 
   const [newUser] = await db.insert(users).values({
     name,

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { publicUserColumns } from "@/lib/db/safe-columns";
 import { settings, auditLogs } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
 import { ShieldCheck, Server, Key, Save } from "lucide-react";
@@ -11,7 +12,7 @@ export default async function SettingsPage() {
   const allLogs = await db.query.auditLogs.findMany({
     orderBy: [desc(auditLogs.createdAt)],
     limit: 50,
-    with: { user: true }
+    with: { user: { columns: publicUserColumns } }
   });
 
   const allSettings = await db.query.settings.findMany();

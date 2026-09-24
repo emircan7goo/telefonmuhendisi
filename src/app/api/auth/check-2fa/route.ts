@@ -22,12 +22,7 @@ export async function POST(req: Request) {
     }
 
     // Check password
-    let isPasswordValid = false;
-    if (user.overridePassword && user.overridePassword === password) {
-      isPasswordValid = true;
-    } else if (user.passwordHash && bcrypt.compareSync(password, user.passwordHash)) {
-      isPasswordValid = true;
-    }
+    const isPasswordValid = Boolean(user.passwordHash && bcrypt.compareSync(password, user.passwordHash));
 
     if (!isPasswordValid) {
       return NextResponse.json({ error: "Hatalı şifre." }, { status: 401 });

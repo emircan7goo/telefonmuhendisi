@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "@/lib/mail/smtp";
 import { getRepairStatusUpdatedEmailHtml } from "@/lib/mail/templates";
+import { contactUserColumns } from "@/lib/db/safe-columns";
 
 export async function sendRepairMessage(repairId: number, message: string, imageUrl: string | null = null) {
   const session = await auth();
@@ -52,7 +53,7 @@ export async function updateRepairDetails(repairId: number, data: {
 
   const repair = await db.query.repairs.findFirst({
     where: eq(repairs.id, repairId),
-    with: { user: true }
+    with: { user: { columns: contactUserColumns } }
   });
   if (!repair) throw new Error("Tamir kaydı bulunamadı.");
 
