@@ -45,9 +45,6 @@ export async function GET() {
   result.checks.pusher = {
     configured: Boolean(process.env.PUSHER_APP_ID && process.env.PUSHER_SECRET),
   };
-  result.checks.turn = {
-    configured: Boolean(process.env.TURN_STATIC_AUTH_SECRET && process.env.TURN_HOST),
-  };
 
   result.total_ms = Date.now() - started;
 
