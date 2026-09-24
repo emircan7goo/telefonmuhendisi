@@ -3,7 +3,7 @@ import { products } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 import { and, desc, eq, sql } from "drizzle-orm";
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,8 +47,12 @@ export async function GET(request: NextRequest) {
       offset,
     });
 
+    // Vitrin verisi CDN'de 5 dk tutulur, arka planda 1 gün boyunca eskisi sunulur
+    // (veritabanı trafiğini düşürür). Admin istekleri (inactive/full) önbelleğe alınmaz.
     const headers = {
-      "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      "Cache-Control": includeInactive || full
+        ? "private, no-store"
+        : "public, s-maxage=300, stale-while-revalidate=86400",
     };
 
     if (!paginated) {
