@@ -52,7 +52,7 @@ export function Footer({ settings }: { settings?: Record<string, string> }) {
       
       {/* Subtle Aurora Glow on Footer */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
-      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[800px] h-[300px] rounded-full pointer-events-none bg-[radial-gradient(closest-side,rgba(59,130,246,0.06),transparent)]" />
 
       <div className="container-custom pt-12 md:pt-20 pb-8 md:pb-12 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-x-6 gap-y-10 pb-12 md:pb-16 border-b border-slate-200">

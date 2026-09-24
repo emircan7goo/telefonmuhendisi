@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { devicePurchases, notifications, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { sendEmail } from "@/lib/mail/smtp";
+import { escapeHtml, sendEmail } from "@/lib/mail";
 import { getSessionUser } from "@/lib/authz";
 import { contactUserColumns } from "@/lib/db/safe-columns";
 
@@ -50,11 +50,11 @@ export async function makeOffer(data: { id: number; price: number; notes: string
       const emailHtml = `
         <div style="font-family: sans-serif; padding: 20px;">
           <h2>Talebiniz İncelendi!</h2>
-          <p>Sayın ${purchase.user.name || "Müşterimiz"},</p>
-          <p>Telefon Mühendisi'ne göndermiş olduğunuz <strong>${purchase.brand} ${purchase.model}</strong> marka/model cihazınız uzmanlarımızca incelenmiştir.</p>
+          <p>Sayın ${escapeHtml(purchase.user.name || "Müşterimiz")},</p>
+          <p>Telefon Mühendisi'ne göndermiş olduğunuz <strong>${escapeHtml(purchase.brand)} ${escapeHtml(purchase.model)}</strong> marka/model cihazınız uzmanlarımızca incelenmiştir.</p>
           <p>Cihazınız için size sunabileceğimiz net nakit/takas teklifi:</p>
           <h1 style="color: #4f46e5; font-size: 36px;">${data.price.toLocaleString("tr-TR")} ₺</h1>
-          ${data.notes ? `<p><strong>Uzman Notu:</strong> ${data.notes}</p>` : ''}
+          ${data.notes ? `<p><strong>Uzman Notu:</strong> ${escapeHtml(data.notes)}</p>` : ''}
           <br/>
           <p>Teklifimizi değerlendirmek için hemen sitemize giriş yapın ve profilinize gidin!</p>
           <a href="http://localhost:3000/profil" style="padding: 12px 24px; background-color: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Profilime Git</a>

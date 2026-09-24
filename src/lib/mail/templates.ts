@@ -1,3 +1,5 @@
+import { escapeHtml } from "@/lib/mail";
+
 export const EMAIL_COLORS = {
   primary: "#2563eb",
   bg: "#f8fafc",
@@ -27,12 +29,12 @@ export const getRepairCreatedEmailHtml = (userName: string, deviceName: string, 
       <h1>📱 Telefon Mühendisi</h1>
     </div>
     <div class="content">
-      <h2>Merhaba ${userName},</h2>
+      <h2>Merhaba ${escapeHtml(userName)},</h2>
       <p>Cihazınız için onarım talebiniz başarıyla alınmıştır. Teknik ekibimiz en kısa sürede bilgileri inceleyecek ve size bir fiyat teklifi sunacaktır.</p>
       
       <div class="box">
-        <strong>Cihaz:</strong> ${deviceName}<br>
-        <strong>Arıza:</strong> ${issueName}
+        <strong>Cihaz:</strong> ${escapeHtml(deviceName)}<br>
+        <strong>Arıza:</strong> ${escapeHtml(issueName)}
       </div>
 
       <p>Cihazınızın durumunu müşteri panelinizden canlı olarak takip edebilirsiniz.</p>
@@ -73,15 +75,15 @@ export const getRepairStatusUpdatedEmailHtml = (userName: string, deviceName: st
       <h1>📱 Telefon Mühendisi</h1>
     </div>
     <div class="content">
-      <h2>Merhaba ${userName},</h2>
-      <p><strong>${deviceName}</strong> cihazınızın onarım durumunda bir güncelleme var.</p>
+      <h2>Merhaba ${escapeHtml(userName)},</h2>
+      <p><strong>${escapeHtml(deviceName)}</strong> cihazınızın onarım durumunda bir güncelleme var.</p>
       
-      <p>Yeni Durum: <span class="status-badge">${statusName}</span></p>
+      <p>Yeni Durum: <span class="status-badge">${escapeHtml(statusName)}</span></p>
 
       ${note ? `
       <div class="note-box">
         <strong>Teknisyen Notu:</strong><br>
-        "${note}"
+        "${escapeHtml(note)}"
       </div>
       ` : ''}
 

@@ -102,10 +102,9 @@ export default function RegisterPage() {
       
       {/* Background Hologram & Mesh */}
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-        <motion.div 
-          animate={{ rotateZ: -360, scale: [1, 1.2, 1] }}
-          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-          className="absolute w-[900px] h-[900px] bg-gradient-to-tr from-blue-100 to-indigo-100 blur-[150px] rounded-full"
+        <div
+          className="absolute w-[900px] h-[900px] rounded-full"
+          style={{ background: "radial-gradient(closest-side, rgba(219,234,254,0.9), rgba(224,231,255,0.5) 60%, transparent)" }}
         />
         {/* Holographic Topo Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] opacity-100" />
@@ -178,7 +177,7 @@ export default function RegisterPage() {
                 key={step === 1 ? "step1" : "step2"}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+                exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.4 }}
                 className="bg-white rounded-[2rem] p-8 md:p-10 w-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 relative overflow-hidden"
               >

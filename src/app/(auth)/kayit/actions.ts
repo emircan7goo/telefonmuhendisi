@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { users, verificationTokens } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { sendEmail } from "@/lib/mail/smtp";
+import { sendEmail } from "@/lib/mail";
 import bcrypt from "bcryptjs";
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, normalizeEmail } from "@/lib/email";
 import { userEmailEquals } from "@/lib/db/user-email";

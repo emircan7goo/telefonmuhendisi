@@ -70,8 +70,8 @@ export default function AdminLoginForm() {
     <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6 relative overflow-hidden">
       
       {/* Decorative Orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full pointer-events-none bg-[radial-gradient(closest-side,rgba(37,99,235,0.12),transparent)]" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full pointer-events-none bg-[radial-gradient(closest-side,rgba(79,70,229,0.12),transparent)]" />
 
       <div className="w-full max-w-md relative z-10">
         

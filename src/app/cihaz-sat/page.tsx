@@ -174,7 +174,7 @@ export default function CihazSatPage() {
   const containerVariants = {
     hidden: { opacity: 0, scale: 0.98, y: 20 },
     visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.4, ease: "easeOut", staggerChildren: 0.03 }, willChange: "transform, opacity" },
-    exit: { opacity: 0, scale: 1.02, y: -20, filter: "blur(5px)", transition: { duration: 0.3, ease: "easeIn" }, willChange: "transform, opacity" }
+    exit: { opacity: 0, scale: 1.02, y: -20, transition: { duration: 0.3, ease: "easeIn" }, willChange: "transform, opacity" }
   };
 
   const itemVariants = {
@@ -192,7 +192,7 @@ export default function CihazSatPage() {
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -60, filter: "blur(12px)" }}
+              exit={{ opacity: 0, y: -60 }}
               transition={{ duration: 0.8, ease: "easeInOut" }}
               className="text-center mb-10 relative z-20"
             >

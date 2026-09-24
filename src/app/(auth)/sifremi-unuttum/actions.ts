@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { users, verificationTokens } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { sendEmail } from "@/lib/mail/smtp";
+import { escapeHtml, sendEmail } from "@/lib/mail";
 import bcrypt from "bcryptjs";
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, normalizeEmail } from "@/lib/email";
 import { userEmailEquals } from "@/lib/db/user-email";
@@ -53,7 +53,7 @@ export async function requestPasswordReset(email: string) {
             <p style="color: #64748b; margin: 5px 0 0 0; font-size: 14px;">Garantili Elektronik Onarım Merkezi</p>
           </div>
           <hr style="border: 0; border-top: 1px solid #f1f5f9; margin-bottom: 25px;" />
-          <p style="color: #334155; font-size: 16px; line-height: 1.5;">Merhaba <strong>${user.name || "Kullanıcımız"}</strong>,</p>
+          <p style="color: #334155; font-size: 16px; line-height: 1.5;">Merhaba <strong>${escapeHtml(user.name || "Kullanıcımız")}</strong>,</p>
           <p style="color: #334155; font-size: 16px; line-height: 1.5;">Hesabınız için şifre sıfırlama talebinde bulundunuz. Aşağıdaki butona tıklayarak hemen yeni bir şifre belirleyebilirsiniz:</p>
           <div style="text-align: center; margin: 35px 0;">
             <a href="${resetLink}" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">Yeni Şifre Belirle</a>

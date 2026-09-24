@@ -173,7 +173,7 @@ export function AiAsistanWidget() {
       {/* Chat Panel (Light Theme Optimized) */}
       {open && (
         <div
-          className={`fixed z-50 right-4 md:right-6 bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-slate-200/80
+          className={`fixed z-50 right-4 md:right-6 bg-white/95 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-slate-200/80
                       flex flex-col transition-all duration-300 ${
                         minimized
                           ? "bottom-20 md:bottom-6 w-72 h-14"

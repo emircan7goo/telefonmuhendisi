@@ -5,7 +5,7 @@ import { repairs, repairMessages, auditLogs } from "@/lib/db/schema";
 import { claimFor, requireRepairAccess } from "@/lib/authz";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
-import { sendEmail } from "@/lib/mail/smtp";
+import { sendEmail } from "@/lib/mail";
 import { getRepairStatusUpdatedEmailHtml } from "@/lib/mail/templates";
 import { contactUserColumns } from "@/lib/db/safe-columns";
 import { REPAIR_STATUS_META, normalizeRepairStatus, parsePrice, parseRepairStatus } from "@/lib/repair-status";

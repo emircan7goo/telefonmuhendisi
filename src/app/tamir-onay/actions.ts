@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { repairs, users } from "@/lib/db/schema";
 import { auth } from "@/auth";
 import { eq } from "drizzle-orm";
-import { sendEmail } from "@/lib/mail/smtp";
+import { sendEmail } from "@/lib/mail";
 import { getRepairCreatedEmailHtml } from "@/lib/mail/templates";
 
 export async function createRepairTicket(data: any) {

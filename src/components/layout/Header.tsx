@@ -50,12 +50,12 @@ export function Header({ settings }: { settings?: Record<string, string> }) {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-[100] transition-[background-color,border-color,box-shadow,backdrop-filter,padding] duration-500 border-b ${
+        className={`fixed top-0 left-0 right-0 z-[100] transition-[background-color,border-color,box-shadow,padding] duration-500 border-b ${
           isScrolled 
-            ? "bg-white/80 backdrop-blur-xl border-gray-200/50 shadow-[0_10px_40px_rgba(0,0,0,0.05)] py-3" 
+            ? "bg-white/85 backdrop-blur-md border-gray-200/50 shadow-[0_10px_40px_rgba(0,0,0,0.05)] py-3" 
             : "bg-transparent border-transparent py-5"
         }`}
-        style={{ transform: "translateZ(0)", willChange: "padding, background-color, backdrop-filter" }}
+        style={{ transform: "translateZ(0)" }}
       >
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex items-center justify-between">

@@ -10,8 +10,8 @@ export default function FAQPage() {
     <div className="relative min-h-screen pt-32 pb-24 overflow-hidden bg-slate-50">
       
       {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full pointer-events-none bg-[radial-gradient(closest-side,rgba(59,130,246,0.06),transparent)]" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full pointer-events-none bg-[radial-gradient(closest-side,rgba(99,102,241,0.06),transparent)]" />
 
       <div className="container-custom max-w-4xl relative z-10">
         
@@ -70,7 +70,7 @@ export default function FAQPage() {
 
         {/* Contact CTA */}
         <div className="mt-16 bg-blue-600 rounded-[2rem] p-10 text-center shadow-2xl relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+           <div className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none bg-[radial-gradient(closest-side,rgba(255,255,255,0.12),transparent)]" />
            <ShieldCheck className="w-12 h-12 text-white mx-auto mb-6" />
            <h3 className="text-2xl font-black text-white mb-4">Cevabını bulamadınız mı?</h3>
            <p className="text-blue-100 font-medium mb-8 max-w-lg mx-auto">

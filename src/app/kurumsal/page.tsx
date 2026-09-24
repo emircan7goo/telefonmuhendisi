@@ -14,7 +14,7 @@ export default function CorporatePage() {
       
       {/* Background Elements */}
       <div className="absolute top-0 right-0 w-1/2 h-[500px] bg-gradient-to-bl from-blue-50 to-transparent -z-10 rounded-bl-[100px]" />
-      <div className="absolute top-40 left-10 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl -z-10" />
+      <div className="absolute top-40 left-10 w-72 h-72 rounded-full -z-10 bg-[radial-gradient(closest-side,rgba(59,130,246,0.06),transparent)]" />
 
       <div className="container-custom max-w-6xl">
         
@@ -32,7 +32,7 @@ export default function CorporatePage() {
 
         {/* The YouTube Effect */}
         <div className="bg-slate-900 rounded-[3rem] p-8 md:p-16 text-white mb-24 relative overflow-hidden shadow-2xl border border-slate-800">
-           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-red-500/10 rounded-full blur-[100px]" />
+           <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-[radial-gradient(closest-side,rgba(239,68,68,0.12),transparent)]" />
            
            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10 items-center">
               <div>
@@ -99,7 +99,7 @@ export default function CorporatePage() {
              {/* Info Cards */}
              <div className="flex flex-col gap-6">
                 <div className="bg-slate-900 rounded-3xl p-8 md:p-10 text-white relative overflow-hidden shadow-2xl h-full flex flex-col justify-center border border-slate-800">
-                  <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-blue-500/20 rounded-full blur-[80px]" />
+                  <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full bg-[radial-gradient(closest-side,rgba(59,130,246,0.22),transparent)]" />
                   <h3 className="text-3xl font-black mb-8 relative z-10">Bize Ulaşın</h3>
                   
                   <div className="space-y-6 relative z-10">

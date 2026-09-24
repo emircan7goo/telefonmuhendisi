@@ -18,7 +18,7 @@ const nextConfig = {
     formats: ["image/avif", "image/webp"],
   },
   // Node-native paketler (server component'lerde import edilir) build'e girmesin
-  serverExternalPackages: ["iyzipay", "ioredis", "pusher", "postgres", "@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner"],
+  serverExternalPackages: ["iyzipay", "ioredis", "pusher", "postgres", "@aws-sdk/client-s3"],
   // Aşamalı temizlik: STRICT_BUILD=true iken TS/ESLint hataları build'i keser (CI'da).
   eslint: {
     ignoreDuringBuilds: process.env.STRICT_BUILD !== "true",
