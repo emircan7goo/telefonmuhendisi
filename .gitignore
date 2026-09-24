@@ -3,6 +3,8 @@
 # güvenlik — asla commit edilmemeli
 node_modules/
 .next/
+.open-next/
+.wrangler/
 .env
 .env.*
 !.env.example
