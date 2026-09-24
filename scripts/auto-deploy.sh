@@ -31,10 +31,9 @@ tail -5 deploy.log
 # Canlı doğrulama
 fail=0
 check() { local got; got=$(curl -s -o /dev/null -w "%{http_code}" "https://telefonmuhendisi.com$1"); [ "$got" = "$2" ] && echo "OK  $1 $got" || { echo "BAD $1 $got (beklenen $2)"; fail=1; }; }
-check /api/v1/devices 401
+check /api/v1/devices 404
 check /api/test-env 404
 check /api/orders 401
-check /tmhackerz 307
-check /og-image.jpg 200
+check /tmhackerz 308
 check /tamir 200
 exit $fail

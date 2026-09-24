@@ -52,9 +52,10 @@ const nextConfig = {
         destination: "/tmkontrols/:path*",
         permanent: true,
       },
-      // Eski/kopya URL'ler — tek bir adrese toplandı
-      { source: "/tmhackerz/:path*", destination: "/dashboard", permanent: false },
-      { source: "/telefonmuhendisi/:path*", destination: "/dashboard", permanent: false },
+      // Eski/kopya ve silinen URL'ler — ana sayfaya veya doğru adrese yönlendirildi
+      { source: "/tmhackerz/:path*", destination: "/", permanent: true },
+      { source: "/telefonmuhendisi/:path*", destination: "/", permanent: true },
+      { source: "/dashboard/:path*", destination: "/", permanent: true },
       { source: "/tamir-takip", destination: "/takip", permanent: true },
       // www → apex (kopya içerik olmasın)
       {

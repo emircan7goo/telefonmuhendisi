@@ -6,10 +6,7 @@ import { usePathname } from "next/navigation";
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isExcluded = 
-    pathname?.startsWith("/dashboard") || 
     pathname?.startsWith("/tmkontrols") || 
-    pathname?.startsWith("/tmhackerz") || 
-    pathname?.startsWith("/tmerisim") || 
     pathname?.startsWith("/admin");
 
   if (isExcluded) {

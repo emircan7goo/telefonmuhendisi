@@ -40,10 +40,10 @@ export default function ErrorBoundary({
             <RefreshCw className="w-4 h-4" /> Tekrar Dene
           </button>
           <Link 
-            href="/dashboard" 
+            href="/" 
             className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 font-semibold text-xs rounded-xl flex items-center justify-center gap-2 transition"
           >
-            <Home className="w-4 h-4 text-slate-400" /> Paneli Yeniden Aç
+            <Home className="w-4 h-4 text-slate-400" /> Ana Sayfaya Dön
           </Link>
         </div>
       </div>

@@ -9,9 +9,6 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const isControlDeck = 
-      pathname?.startsWith("/tmhackerz") || 
-      pathname?.startsWith("/tmerisim") || 
-      pathname?.startsWith("/dashboard") ||
       pathname?.startsWith("/tmkontrols");
 
     if (!isControlDeck) {

@@ -12,11 +12,7 @@ export function SiteLayoutWrapper({ children, settings }: { children: React.Reac
   const isStandalone = 
     pathname?.startsWith("/admin") || 
     pathname?.startsWith("/tmkontrols") || 
-    pathname?.startsWith("/tmkontrols-giris") ||
-    pathname?.startsWith("/dashboard") ||
-    pathname?.startsWith("/tmhackerz") ||
-    pathname?.startsWith("/tmerisim") ||
-    pathname?.startsWith("/telefonmuhendisi");
+    pathname?.startsWith("/tmkontrols-giris");
 
   // Admin ve MDM Dashboard panelinde site Header, Footer ve Asistanını GİZLE
   if (isStandalone) {

@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
       disallow: [
-        '/api/', '/tmkontrols', '/tmkontrols-giris', '/dashboard', '/hesabim/', '/profil',
+        '/api/', '/tmkontrols', '/tmkontrols-giris', '/hesabim/', '/profil',
         '/sepet', '/checkout', '/tamir-onay', '/giris', '/kayit', '/sifremi-unuttum',
       ],
     },
