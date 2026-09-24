@@ -15,7 +15,7 @@ export const client =
     prepare: false, // Supabase/Neon transaction pool uyumu
     max: Number(process.env.PG_POOL_MAX ?? 10),
     idle_timeout: Number(process.env.PG_IDLE_TIMEOUT ?? 30),
-    connect_timeout: Number(process.env.PG_CONNECT_TIMEOUT ?? 10),
+    connect_timeout: Number(process.env.PG_CONNECT_TIMEOUT ?? 25),
     max_lifetime: 60 * 30,
   });
 
