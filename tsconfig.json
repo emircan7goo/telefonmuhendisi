@@ -1,0 +1,57 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "target": "ES2017"
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "telefoncum",
+    "sharing",
+    "apk",
+    "scratch",
+    "docker",
+    "data",
+    "scrcpy-win64-v3.1",
+    "check-db.ts",
+    "download_logos.js",
+    "query.js",
+    "query_test.js",
+    "scratch_insert.ts",
+    "scratch_list_users.ts",
+    "seed-coupons.ts",
+    "test_r2.js",
+    "theme-fix.js",
+    "update_devices.js"
+  ]
+}

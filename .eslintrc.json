@@ -1,0 +1,26 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "ignorePatterns": [
+    "node_modules/",
+    ".next/",
+    "telefoncum/",
+    "sharing/",
+    "apk/",
+    "scratch/",
+    "docker/",
+    "data/",
+    "scrcpy-win64-v3.1/",
+    "public/",
+    "**/*.js",
+    "next-env.d.ts"
+  ],
+  "rules": {
+    "react/no-unescaped-entities": "off",
+    "@next/next/no-img-element": "warn",
+    "react-hooks/exhaustive-deps": "warn",
+    "prefer-const": "warn",
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-empty-object-type": "off"
+  }
+}

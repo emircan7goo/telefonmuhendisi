@@ -1,0 +1,24 @@
+.vercel
+
+# güvenlik — asla commit edilmemeli
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+*.rar
+apk/
+scratch/
+scrcpy-win64-*/
+tsconfig.tsbuildinfo
+public/sw.js
+public/workbox-*.js
+telefoncum/
+sharing/
+data/
+*.log
+query.js
+query_test.js
+scratch_*.ts
+check-db.ts
+test_r2.js
