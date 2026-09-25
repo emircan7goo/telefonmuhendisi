@@ -5,11 +5,15 @@ import { settings, auditLogs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getSessionUser } from "@/lib/authz";
 import { revalidatePath } from "next/cache";
+import { normalizeEmail } from "@/lib/email";
+import { normalizeTrPhone } from "@/lib/contact";
 
 export async function saveSettings(formData: {
   siteTitle: string;
   contactPhone: string;
   maintenanceMode: string;
+  notifyEmail: string;
+  defaultTechnicianEmail: string;
 }) {
   try {
     const admin = await getSessionUser();
@@ -17,11 +21,23 @@ export async function saveSettings(formData: {
       return { success: false, error: "Yetkisiz erişim." };
     }
 
+    const notifyEmail = normalizeEmail(formData.notifyEmail);
+    const defaultTechnicianEmail = normalizeEmail(formData.defaultTechnicianEmail);
+    const looksLikeEmail = (v: string) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    if (!looksLikeEmail(notifyEmail) || !looksLikeEmail(defaultTechnicianEmail)) {
+      return { success: false, error: "Lütfen geçerli bir e-posta adresi girin." };
+    }
+    if (formData.contactPhone && !normalizeTrPhone(formData.contactPhone)) {
+      return { success: false, error: "İletişim numarası geçerli bir Türkiye cep/sabit numarası olmalı (örn. 0544 945 64 17)." };
+    }
+
     // Array of key value pairs
     const pairs = [
       { key: "siteTitle", value: formData.siteTitle },
       { key: "contactPhone", value: formData.contactPhone },
       { key: "maintenanceMode", value: formData.maintenanceMode },
+      { key: "notifyEmail", value: notifyEmail },
+      { key: "defaultTechnicianEmail", value: defaultTechnicianEmail },
     ];
 
     for (const pair of pairs) {

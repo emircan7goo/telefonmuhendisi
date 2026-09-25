@@ -9,6 +9,7 @@ import { FloatingUI } from "@/components/ui/FloatingUI";
 import { signOut } from "@/auth";
 import { RepairAcceptButton } from "./RepairAcceptButton";
 import { normalizeRepairStatus, repairStatusMeta } from "@/lib/repair-status";
+import { ShopVisitCard } from "@/components/repair/ShopVisitCard";
 import { CustomerChat } from "@/components/ui/CustomerChat";
 
 export const dynamic = "force-dynamic";
@@ -260,6 +261,10 @@ export default async function ProfilePage() {
                       {/* Fiyat Onay Kısmı */}
                       {normalizeRepairStatus(repair.status) === "awaiting_customer_approval" && repair.estimatedPrice && (
                         <RepairAcceptButton repairId={repair.id} price={repair.estimatedPrice} />
+                      )}
+
+                      {normalizeRepairStatus(repair.status) === "customer_agreed" && repair.repairType === "instore" && (
+                        <ShopVisitCard repairId={repair.id} />
                       )}
 
                       {/* Onaylanmış Kargo veya WhatsApp Mesajı */}

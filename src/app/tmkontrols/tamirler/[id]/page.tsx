@@ -10,6 +10,7 @@ import { ImageViewer } from "@/components/ui/ImageViewer";
 import { contactUserColumns, publicUserColumns } from "@/lib/db/safe-columns";
 import { canAccessRepair, getSessionUser } from "@/lib/authz";
 import { redirect } from "next/navigation";
+import { repairTypeLabel } from "@/lib/repair-status";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,7 @@ export default async function RepairDetailPage({ params }: { params: Promise<{ i
             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Cihaz & Arıza</div>
             <div className="font-bold text-slate-900 text-lg leading-tight">{repairResult.deviceModel}</div>
             <div className="text-xs font-mono text-slate-500 mt-2">IMEI: {repairResult.imei || "Belirtilmedi"}</div>
-            <div className="text-xs font-semibold text-slate-400 mt-1">Onarım Türü: {repairResult.repairType === "cargo" ? "Kargo ile" : repairResult.repairType === "instore" ? "Yerinde / Dükkanda" : "Uzaktan Destek"}</div>
+            <div className="text-xs font-semibold text-slate-400 mt-1">Teslimat: {repairTypeLabel(repairResult.repairType)}</div>
             
             <div className="mt-6 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Müşteri Şikayeti & Görseller</div>
             <div className="text-sm font-medium text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100 whitespace-pre-line">

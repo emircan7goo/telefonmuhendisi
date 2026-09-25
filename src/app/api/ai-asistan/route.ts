@@ -2,32 +2,47 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { auth } from "@/auth";
 import { rateLimit, rateLimitGcTick } from "@/lib/rateLimit";
+import { BRAND_PRICE_RANGES_TEXT, mentionedModelPrices } from "@/lib/ai/repair-price-guide";
+import { DEFAULT_SHOP_PHONE, SHOP_ADDRESS, formatTrPhone } from "@/lib/contact";
+import { getShopSettings } from "@/lib/settings";
 
 const MAX_HISTORY_MESSAGES = 12;
 const MAX_MESSAGE_CHARS = 2000;
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || "");
 
-const SYSTEM_PROMPT = `Sen "Telefon Mühendisi" platformunun yapay zeka arıza teşhis asistanısın. Türkçe konuşuyorsun.
+// Model adı ortamdan değiştirilebilir; varsayılan Google'ın güncel Flash takma adı.
+const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || "gemini-flash-latest";
+
+function buildSystemPrompt(shopPhone: string, modelPrices: string | null) {
+  return `Sen "Telefon Mühendisi" (Karamürsel / Kocaeli) telefon tamir dükkanının yapay zeka arıza teşhis asistanısın. Türkçe konuşuyorsun.
 
 Görevin:
 1. Kullanıcının telefon/elektronik cihaz sorununu analiz et
 2. Olası arızaları listele (en fazla 3-4 madde)
-3. Her arıza için tahmini fiyat aralığı ver (₺ cinsinden Türkiye fiyatları)
-4. Tavsiyende bulun (kargo ile tamir, mağazaya getir veya uzaktan destek)
-5. Acil ise uyar
+3. Fiyat sorulursa SADECE aşağıdaki liste fiyatlarını kullan (bunlar sitedeki tamir sihirbazıyla aynıdır)
+4. Tavsiyede bulun: dükkana getirme, kargo ile gönderme veya (yazılımsal sorunlarda) uzaktan destek
+5. Acil ise uyar (sıvı teması, şişmiş batarya vb.)
 
-Fiyat referansları (2026 Türkiye):
-- Ekran değişimi iPhone: 800-4500₺ (modele göre)
-- Ekran değişimi Samsung: 600-3500₺
-- Batarya değişimi: 300-800₺  
-- Anakart tamiri: 500-3000₺
-- Su hasarı tamiri: 300-2000₺
-- Yazılım güncelleme/format: 200-500₺
-- Şarj soketi: 300-700₺
+FİYAT KURALLARI (çok önemli):
+- Aşağıdaki listede olmayan bir fiyat UYDURMA, liste dışı indirim veya kampanya vaat etme.
+- Model aşağıda "kesin liste fiyatı" olarak geçiyorsa o fiyatı söyle.
+- Model belli değilse marka aralığını ver ve modeli sor.
+- Listede olmayan marka/model için fiyat verme; tamir talebi oluşturmasını veya WhatsApp'tan yazmasını öner.
+- Liste fiyatları ön tekliftir; kesin fiyat cihaz incelendikten sonra netleşir, bunu belirt.
+${modelPrices ? `
+Kullanıcının bahsettiği modellerin kesin liste fiyatları:
+${modelPrices}
+` : ""}
+Marka bazlı liste fiyat aralıkları (en ucuz–en pahalı model):
+${BRAND_PRICE_RANGES_TEXT}
+
+Dükkan bilgileri: ${SHOP_ADDRESS}. Telefon/WhatsApp: ${formatTrPhone(shopPhone)}.
+Tamir talebi sitedeki "Onarım Merkezi" (/tamir) sayfasından oluşturulur.
 
 Yanıtların kısa, net ve dostane olsun. Fazla teknik jargon kullanma.
-Sonunda her zaman bir aksiyon öner: tamir başvurusu, kargo ile gönderme veya arama.`;
+Sonunda her zaman bir aksiyon öner: tamir talebi oluşturma, dükkana gelme, WhatsApp'tan yazma veya arama.`;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -85,7 +100,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Geçersiz istek" }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    // Fiyat listesi: son kullanıcı mesajlarında geçen modeller varsa kesin fiyatları eklenir.
+    const recentUserText = messages.filter((m) => m.role === "user").slice(-3).map((m) => m.content).join("\n");
+    const settings = await getShopSettings();
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_MODEL,
+      systemInstruction: buildSystemPrompt(settings.contactPhone || DEFAULT_SHOP_PHONE, mentionedModelPrices(recentUserText)),
+    });
 
     // Build history (exclude last user message, it goes as the prompt)
     const history = messages.slice(0, -1).map((m) => ({
@@ -96,14 +117,10 @@ export async function POST(req: NextRequest) {
     const lastMessage = messages[messages.length - 1];
 
     const chat = model.startChat({
-      history: [
-        { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
-        { role: "model", parts: [{ text: "Anlaşıldı! Kullanıcılara en iyi arıza teşhisi ve fiyat tahmini hizmetini vereceğim. Hazırım!" }] },
-        ...history,
-      ],
+      history,
       generationConfig: {
         maxOutputTokens: 600,
-        temperature: 0.7,
+        temperature: 0.4,
       },
     });
 

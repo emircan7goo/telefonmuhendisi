@@ -12,6 +12,7 @@ import {
   normalizeCouponCode,
   toKurus,
 } from "@/lib/orders/pricing";
+import { notifyShop } from "@/lib/notify";
 
 const MAX_QTY_PER_ITEM = 20;
 const MAX_LINES = 50;
@@ -77,7 +78,7 @@ export async function createOrder(input: CreateOrderInput) {
       const byId = new Map(rows.map((r) => [r.id, r]));
 
       let subtotal = 0;
-      const lines: Array<{ productId: number; quantity: number; unitPrice: string }> = [];
+      const lines: Array<{ productId: number; name: string; quantity: number; unitPrice: string }> = [];
       for (const productId of productIds) {
         const product = byId.get(productId);
         const quantity = quantities.get(productId)!;
@@ -95,7 +96,7 @@ export async function createOrder(input: CreateOrderInput) {
           );
         }
         subtotal += toKurus(product.price) * quantity;
-        lines.push({ productId, quantity, unitPrice: product.price });
+        lines.push({ productId, name: product.name, quantity, unitPrice: product.price });
       }
 
       // 2. Kuponu kilitle ve doğrula
@@ -156,10 +157,27 @@ export async function createOrder(input: CreateOrderInput) {
         }))
       );
 
-      return { orderId: order.id, totalAmount: fromKurus(totals.total) };
+      return { orderId: order.id, totalAmount: fromKurus(totals.total), lines };
     });
 
-    return { success: true, ...result };
+    await notifyShop({
+      subject: `🛒 Yeni Sipariş #${result.orderId} — ${result.totalAmount} ₺`,
+      title: `Yeni sipariş #${result.orderId}`,
+      rows: [
+        ["Müşteri", data.shippingAddress.fullName],
+        ["Telefon", data.shippingAddress.phone],
+        ["Adres", `${data.shippingAddress.fullAddress}\n${data.shippingAddress.district} / ${data.shippingAddress.city}`],
+        ["Ödeme", data.paymentMethod === "havale" ? "Havale / EFT (ödeme bekleniyor)" : "Kapıda ödeme"],
+        ["Ürünler", result.lines.map((l) => `${l.quantity} × ${l.name}`).join("\n")],
+        ["Kupon", data.couponCode],
+        ["Toplam", `${result.totalAmount} ₺`],
+      ],
+      customerPhone: data.shippingAddress.phone,
+      customerMessage: `Merhaba ${data.shippingAddress.fullName}, Telefon Mühendisi'nden yazıyoruz. #${result.orderId} numaralı siparişiniz hakkında:`,
+      adminPath: "/tmkontrols/siparisler",
+    });
+
+    return { success: true, orderId: result.orderId, totalAmount: result.totalAmount };
   } catch (error) {
     if (error instanceof OrderError || error instanceof AuthzError) {
       return { success: false, error: error.message };

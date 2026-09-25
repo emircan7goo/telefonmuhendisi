@@ -49,6 +49,9 @@ export async function POST(
       status = acceptedStatusFor(repair.repairType);
       set.finalPrice = repair.estimatedPrice;
     } else if (status === "shipped_to_shop") {
+      if (repair.repairType !== "cargo") {
+        return NextResponse.json({ error: "Bu tamir kargo ile gönderim için oluşturulmadı." }, { status: 400 });
+      }
       const code = typeof body.customerTrackingCode === "string" ? body.customerTrackingCode.trim().slice(0, 64) : "";
       if (code) set.customerTrackingCode = code;
     } else if (status === "customer_counter_offer") {

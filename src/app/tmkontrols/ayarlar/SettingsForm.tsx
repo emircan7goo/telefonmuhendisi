@@ -10,6 +10,8 @@ export default function SettingsForm({ initialData }: { initialData: Record<stri
     siteTitle: initialData.siteTitle || "Telefon Mühendisi",
     contactPhone: initialData.contactPhone || "+905449456417",
     maintenanceMode: initialData.maintenanceMode || "false",
+    notifyEmail: initialData.notifyEmail || "",
+    defaultTechnicianEmail: initialData.defaultTechnicianEmail || "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -50,6 +52,28 @@ export default function SettingsForm({ initialData }: { initialData: Record<stri
               onChange={(e) => setFormData({...formData, contactPhone: e.target.value})}
               className="w-full bg-white/80 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none" 
             />
+         </div>
+         <div>
+            <label className="block text-xs font-black tracking-widest text-slate-400 uppercase mb-2">Bildirim E-postası (Yeni Talepler)</label>
+            <input 
+              type="email" 
+              placeholder="destek@telefonmuhendisi.com"
+              value={formData.notifyEmail}
+              onChange={(e) => setFormData({...formData, notifyEmail: e.target.value})}
+              className="w-full bg-white/80 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none" 
+            />
+            <p className="text-[11px] text-slate-500 mt-1">Yeni tamir, sipariş, cihaz satış talebi ve müşteri onay/pazarlık bildirimleri bu adrese gider. Boş bırakılırsa destek@telefonmuhendisi.com kullanılır.</p>
+         </div>
+         <div>
+            <label className="block text-xs font-black tracking-widest text-slate-400 uppercase mb-2">Varsayılan Teknisyen E-postası</label>
+            <input 
+              type="email" 
+              placeholder="teknisyen@ornek.com"
+              value={formData.defaultTechnicianEmail}
+              onChange={(e) => setFormData({...formData, defaultTechnicianEmail: e.target.value})}
+              className="w-full bg-white/80 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none" 
+            />
+            <p className="text-[11px] text-slate-500 mt-1">Yeni tamir talepleri otomatik olarak bu teknisyene atanır (hesap teknisyen rolünde olmalı).</p>
          </div>
          <div>
             <label className="block text-xs font-black tracking-widest text-slate-400 uppercase mb-2">Bakım Modu (Siteyi Kapat)</label>

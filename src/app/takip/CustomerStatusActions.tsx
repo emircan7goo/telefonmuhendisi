@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, Truck, CreditCard, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { acceptedStatusFor, normalizeRepairStatus } from "@/lib/repair-status";
+import { ShopVisitCard } from "@/components/repair/ShopVisitCard";
 
 export function CustomerStatusActions({ 
   repairId, 
@@ -32,7 +33,11 @@ export function CustomerStatusActions({
         body: JSON.stringify({ status: nextStatus })
       });
       if (!res.ok) throw new Error((await res.json().catch(() => null))?.error);
-      toast.success(repairType === "cargo" ? "Teklifi onayladınız! Lütfen kargo adımlarını takip edin." : "Teklifi onayladınız! Onarım işlemi başlıyor.");
+      toast.success(
+        repairType === "cargo" ? "Teklifi onayladınız! Lütfen kargo adımlarını takip edin."
+          : repairType === "remote" ? "Teklifi onayladınız! Onarım işlemi başlıyor."
+          : "Teklifi onayladınız! Cihazınızı dükkanımıza getirebilirsiniz."
+      );
       onRefresh();
     } catch (err: any) {
       toast.error(err?.message || "İşlem sırasında hata oluştu.");
@@ -74,6 +79,10 @@ export function CustomerStatusActions({
         </button>
       </div>
     );
+  }
+
+  if (current === "customer_agreed" && repairType !== "cargo") {
+    return <ShopVisitCard repairId={repairId} />;
   }
 
   if (current === "customer_agreed") {

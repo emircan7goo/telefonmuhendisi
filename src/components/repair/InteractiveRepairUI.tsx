@@ -8,10 +8,22 @@ import { DEVICE_DATABASE, Brand, DeviceModel, RepairOption } from "@/data/device
 import { createRepairTicket } from "@/app/tamir-onay/actions";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
+import { useShopContact } from "@/components/contact/ShopContactProvider";
+import { WhatsAppIcon } from "@/components/contact/ContactFab";
+import { SHOP_ADDRESS, whatsappUrl } from "@/lib/contact";
+
+type DeliveryMethod = "magaza" | "kargo" | "uzaktan";
+
+const DELIVERY_OPTIONS: Record<DeliveryMethod, { title: string; desc: string }> = {
+  magaza: { title: "Dükkana Getireceğim", desc: `Karamürsel'deki dükkanımıza gelin: ${SHOP_ADDRESS}` },
+  kargo: { title: "Kargo ile Göndereceğim", desc: "Cihazınızı bize gönderin, onarıp geri kargolayalım." },
+  uzaktan: { title: "Uzaktan Bağlantı", desc: "TeamViewer veya AnyDesk ile uzaktan hızlı onarım." },
+};
 
 export function InteractiveRepairUI() {
   // Oturum istemci tarafında okunur — /tamir sayfası statik kalır (hızlı açılır)
   const { data: session } = useSession();
+  const { phone: shopPhone } = useShopContact();
   const [step, setStep] = useState<number>(1);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [selectedModel, setSelectedModel] = useState<DeviceModel | null>(null);
@@ -29,7 +41,7 @@ export function InteractiveRepairUI() {
   const [details, setDetails] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [name, setName] = useState<string>("");
-  const [deliveryMethod, setDeliveryMethod] = useState<string>("uzaktan"); // For software issues
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("magaza");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [acceptedTerms, setAcceptedTerms] = useState<boolean>(false);
   const resetAll = () => {
@@ -559,6 +571,7 @@ export function InteractiveRepairUI() {
                       variants={itemVariants}
                       onClick={() => {
                         setSelectedIssue(repair);
+                        setDeliveryMethod(repair.id === "yazilimsal" ? "uzaktan" : "magaza");
                         nextStep();
                       }}
                       className="group flex items-center justify-between p-4 rounded-xl bg-white border border-slate-100 shadow-[0_5px_15px_rgba(0,0,0,0.05)] hover:border-red-500/30 hover:bg-red-50/30 transition-all text-left"
@@ -650,30 +663,27 @@ export function InteractiveRepairUI() {
                       />
                     </div>
                   </div>
-                ) : (
-                  /* Delivery Method - Only for Software issues */
-                  <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
-                    <label className="flex items-center gap-2 font-bold text-slate-800 mb-3 text-sm">
-                      <Cpu className="w-4 h-4 text-blue-600" /> Teslimat Yöntemi Seçin
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <button 
-                        onClick={() => setDeliveryMethod('uzaktan')}
-                        className={`p-3 rounded-lg border-2 text-left transition-all ${deliveryMethod === 'uzaktan' ? 'border-blue-600 bg-blue-50' : 'border-slate-100 hover:border-blue-300'}`}
+                ) : null}
+
+                {/* Teslimat Yöntemi */}
+                <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                  <label className="flex items-center gap-2 font-bold text-slate-800 mb-3 text-sm">
+                    <Cpu className="w-4 h-4 text-blue-600" /> Cihazınızı Nasıl Ulaştıracaksınız?
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {((selectedIssue.id === "yazilimsal" ? ["uzaktan", "magaza", "kargo"] : ["magaza", "kargo"]) as DeliveryMethod[]).map((method) => (
+                      <button
+                        key={method}
+                        type="button"
+                        onClick={() => setDeliveryMethod(method)}
+                        className={`p-3 rounded-lg border-2 text-left transition-all ${deliveryMethod === method ? 'border-blue-600 bg-blue-50' : 'border-slate-100 hover:border-blue-300'}`}
                       >
-                        <div className="font-bold text-slate-800 text-sm mb-1">Uzaktan Bağlantı</div>
-                        <div className="text-xs text-slate-500 font-medium">TeamViewer veya AnyDesk ile uzaktan hızlı onarım.</div>
+                        <div className="font-bold text-slate-800 text-sm mb-1">{DELIVERY_OPTIONS[method].title}</div>
+                        <div className="text-xs text-slate-500 font-medium">{DELIVERY_OPTIONS[method].desc}</div>
                       </button>
-                      <button 
-                        onClick={() => setDeliveryMethod('kargo')}
-                        className={`p-3 rounded-lg border-2 text-left transition-all ${deliveryMethod === 'kargo' ? 'border-blue-600 bg-blue-50' : 'border-slate-100 hover:border-blue-300'}`}
-                      >
-                        <div className="font-bold text-slate-800 text-sm mb-1">Kargo ile Gönderim</div>
-                        <div className="text-xs text-slate-500 font-medium">Cihazınızı bize gönderin, onarıp geri kargolayalım.</div>
-                      </button>
-                    </div>
+                    ))}
                   </div>
-                )}
+                </div>
 
                 {/* Details */}
                 <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
@@ -732,8 +742,10 @@ export function InteractiveRepairUI() {
                   <div className="text-sm text-slate-700 font-medium">
                     <p className="font-bold text-slate-900 mb-1">Şartları Okudum ve Onaylıyorum</p>
                     <ul className="list-disc list-inside space-y-1 text-xs text-slate-600">
-                      <li>Cihazı kargoya teslim ederken ürünün hasarsız gönderildiğini kanıtlamak adına video/fotoğraf çekmeyi unutmayınız.</li>
-                      <li>Kılıf, kırılmaz cam, SIM kart, hafıza kartı gibi aksesuarları kesinlikle yollamayınız; kaybolması durumunda sorumluluk kabul edilmez.</li>
+                      {deliveryMethod === "kargo" && (
+                        <li>Cihazı kargoya teslim ederken ürünün hasarsız gönderildiğini kanıtlamak adına video/fotoğraf çekmeyi unutmayınız.</li>
+                      )}
+                      <li>Kılıf, kırılmaz cam, SIM kart, hafıza kartı gibi aksesuarları cihazla birlikte bırakmayınız; kaybolması durumunda sorumluluk kabul edilmez.</li>
                       <li>Tamiri biten veya işlem bekleyen cihazların firmamızda 1 aydan fazla kalması durumunda herhangi bir sorumluluk alınmamaktadır.</li>
                     </ul>
                   </div>
@@ -834,6 +846,21 @@ export function InteractiveRepairUI() {
                     )}
                  </div>
               </div>
+
+              <a
+                href={whatsappUrl(
+                  shopPhone,
+                  `Merhaba, ${selectedBrand?.id === "diger" ? "" : `${selectedBrand?.name} `}${selectedModel?.name} cihazım için "${selectedIssue?.name}" talebi oluşturdum. ` +
+                    `Teslimat: ${DELIVERY_OPTIONS[deliveryMethod].title}. Telefon: 0${phone.replace(/\s/g, "")}` +
+                    (details ? `. Detay: ${details}` : "")
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mb-6 inline-flex items-center gap-2 py-3 px-6 rounded-2xl font-bold text-white bg-[#25D366] hover:bg-[#1ebe5b] shadow-lg shadow-green-600/20 transition-all"
+              >
+                <WhatsAppIcon className="w-5 h-5" />
+                {session?.user ? "WhatsApp'tan da Haber Verin" : "Üye Olmadan WhatsApp'tan Gönderin"}
+              </a>
 
               <div className="flex gap-4">
                 {session?.user ? (

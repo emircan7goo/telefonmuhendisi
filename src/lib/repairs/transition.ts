@@ -11,6 +11,7 @@ import {
   type RepairActor,
   type RepairStatus,
 } from "@/lib/repair-status";
+import { notifyCustomerRepairEvent } from "@/lib/repairs/notify";
 
 type RepairRow = typeof repairs.$inferSelect;
 export type RepairUpdate = Partial<typeof repairs.$inferInsert>;
@@ -48,7 +49,7 @@ export async function transitionRepair(input: TransitionInput): Promise<RepairRo
     values.finalPrice = estimatedPrice;
   }
 
-  return db.transaction(async (tx) => {
+  const updatedRepair = await db.transaction(async (tx) => {
     const [updated] = await tx
       .update(repairs)
       .set(values)
@@ -80,4 +81,9 @@ export async function transitionRepair(input: TransitionInput): Promise<RepairRo
 
     return updated;
   });
+
+  // Müşteri aksiyon aldıysa (onay, karşı teklif, kargo, iptal) dükkan sahibine haber ver.
+  if (actor === "customer") await notifyCustomerRepairEvent(updatedRepair, to);
+
+  return updatedRepair;
 }

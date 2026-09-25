@@ -70,7 +70,7 @@ export const REPAIR_STATUS_META: Record<RepairStatus, StatusMeta> = {
   diagnosing:                 { label: "Arıza Tespiti",           customerLabel: "Arıza Tespiti",           badge: "bg-blue-100 text-blue-700",       stage: 2 },
   awaiting_customer_approval: { label: "Müşteri Onayı Bekliyor",  customerLabel: "Onayınız Bekleniyor",     badge: "bg-purple-100 text-purple-700",   stage: 0 },
   customer_counter_offer:     { label: "Müşteri Karşı Teklifi",   customerLabel: "Teklifiniz İnceleniyor",  badge: "bg-orange-100 text-orange-700",   stage: 0 },
-  customer_agreed:            { label: "Kargo Bekleniyor",        customerLabel: "Fiyat Onaylandı",         badge: "bg-pink-100 text-pink-700",       stage: 1 },
+  customer_agreed:            { label: "Cihaz Bekleniyor",        customerLabel: "Fiyat Onaylandı",         badge: "bg-pink-100 text-pink-700",       stage: 1 },
   shipped_to_shop:            { label: "Kargoda (Bize Geliyor)",  customerLabel: "Kargoda (Bize Geliyor)",  badge: "bg-cyan-100 text-cyan-700",       stage: 1 },
   received_by_shop:           { label: "Dükkana Ulaştı",          customerLabel: "Teslim Alındı",           badge: "bg-violet-100 text-violet-700",   stage: 2 },
   in_progress:                { label: "Onarımda (Masada)",       customerLabel: "Onarımda",                badge: "bg-indigo-100 text-indigo-700",   stage: 3 },
@@ -90,7 +90,7 @@ const STAFF_TRANSITIONS: Record<RepairStatus, readonly RepairStatus[]> = {
   // Personel yeni teklif verebilir veya müşterinin telefonda/yüz yüze verdiği onayı işleyebilir
   awaiting_customer_approval: ["awaiting_customer_approval", "diagnosing", "customer_agreed", "in_progress", "cancelled"],
   customer_counter_offer:     ["awaiting_customer_approval", "customer_agreed", "in_progress", "cancelled"],
-  customer_agreed:            ["shipped_to_shop", "received_by_shop", "cancelled"],
+  customer_agreed:            ["shipped_to_shop", "received_by_shop", "in_progress", "cancelled"],
   shipped_to_shop:            ["received_by_shop", "in_progress", "cancelled"],
   received_by_shop:           ["diagnosing", "awaiting_customer_approval", "in_progress", "cancelled"],
   // Onarım sırasında ek arıza çıkarsa yeniden teklif
@@ -144,9 +144,24 @@ export function staffStatusOptions(current: string): RepairStatus[] {
   return REPAIR_STATUSES.filter((s) => s === from || STAFF_TRANSITIONS[from].includes(s));
 }
 
-/** Müşteri teklifi kabul ettiğinde gidilecek durum: kargo ise cihaz beklenir, değilse onarım başlar. */
+/**
+ * Müşteri teklifi kabul ettiğinde gidilecek durum: uzaktan onarımda iş hemen
+ * başlar; kargo ve dükkana getirme durumunda önce cihazın gelmesi beklenir.
+ */
 export function acceptedStatusFor(repairType: string): RepairStatus {
-  return repairType === "cargo" ? "customer_agreed" : "in_progress";
+  return repairType === "remote" ? "in_progress" : "customer_agreed";
+}
+
+export type RepairType = "instore" | "cargo" | "remote";
+
+export const REPAIR_TYPE_LABELS: Record<RepairType, string> = {
+  instore: "Dükkana getirecek",
+  cargo: "Kargo ile gönderecek",
+  remote: "Uzaktan bağlantı",
+};
+
+export function repairTypeLabel(repairType: string | null | undefined): string {
+  return REPAIR_TYPE_LABELS[repairType as RepairType] ?? repairType ?? "-";
 }
 
 /** Bu durumlara geçerken fiyat teklifinin (estimatedPrice) dolu olması gerekir. */
@@ -173,7 +188,7 @@ export function repairStatusSystemMessage(status: RepairStatus, ctx: { price?: s
     case "customer_counter_offer":
       return ctx.price ? `Müşteri karşı teklif sundu: ${ctx.price} ₺. Yetkili incelemesi bekleniyor.` : null;
     case "customer_agreed":
-      return "Müşteri teklifi onayladı. Kargo bekleniyor.";
+      return "Müşteri teklifi onayladı. Cihaz bekleniyor.";
     case "shipped_to_shop":
       return `Müşteri cihazı kargoya verdi. (Takip: ${ctx.trackingCode || "Belirtilmedi"})`;
     case "received_by_shop":

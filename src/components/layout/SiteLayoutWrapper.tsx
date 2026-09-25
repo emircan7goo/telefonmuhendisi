@@ -6,6 +6,8 @@ import { Footer } from "@/components/layout/Footer";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { AiAsistanWidget } from "@/components/ai-asistan/AiAsistanWidget";
 import { PageTransitionProvider } from "@/components/layout/PageTransitionProvider";
+import { ShopContactProvider } from "@/components/contact/ShopContactProvider";
+import { ContactFab } from "@/components/contact/ContactFab";
 
 export function SiteLayoutWrapper({ children, settings }: { children: React.ReactNode, settings?: Record<string, string> }) {
   const pathname = usePathname();
@@ -20,7 +22,7 @@ export function SiteLayoutWrapper({ children, settings }: { children: React.Reac
   }
 
   return (
-    <>
+    <ShopContactProvider phone={settings?.contactPhone}>
       <div className="flex flex-col min-h-screen relative z-0 pointer-events-auto">
         <Header settings={settings} />
         <PageTransitionProvider>
@@ -29,7 +31,8 @@ export function SiteLayoutWrapper({ children, settings }: { children: React.Reac
         <Footer settings={settings} />
       </div>
       <BottomNav />
+      <ContactFab />
       <AiAsistanWidget />
-    </>
+    </ShopContactProvider>
   );
 }

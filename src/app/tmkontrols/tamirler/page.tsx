@@ -6,6 +6,7 @@ import Link from "next/link";
 import { RepairActionControls } from "./RepairActionControls";
 import { getSessionUser, repairScopeFor } from "@/lib/authz";
 import { redirect } from "next/navigation";
+import { repairTypeLabel } from "@/lib/repair-status";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export default async function AdminRepairsPage() {
       status: true,
       finalPrice: true,
       estimatedPrice: true,
+      repairType: true,
       createdAt: true,
     },
     with: {
@@ -85,6 +87,9 @@ export default async function AdminRepairsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="font-bold text-slate-900">{repair.deviceModel}</div>
+                    <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-black ${repair.repairType === "instore" ? "bg-emerald-100 text-emerald-700" : repair.repairType === "cargo" ? "bg-cyan-100 text-cyan-700" : "bg-violet-100 text-violet-700"}`}>
+                      {repairTypeLabel(repair.repairType)}
+                    </span>
                     <div className="text-[10px] font-medium text-slate-500 mt-0.5 max-w-[200px] truncate" title={repair.issueDescription}>{repair.issueDescription}</div>
                   </td>
                   <RepairActionControls 
